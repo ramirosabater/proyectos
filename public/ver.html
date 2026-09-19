@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Propuesta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#EEF0EA; --paper-raised:#FFFFFF; --ink:#1B2420; --ink-soft:#5B6660; --accent:#2F6F5E; --accent-warm:#A6672B; --line:#C7CDBE; --radius:3px;
+    --serif:'Source Serif 4', Georgia, serif; --sans:'IBM Plex Sans', -apple-system, sans-serif; }
+  @media (prefers-color-scheme: dark) { :root { --paper:#131A17; --paper-raised:#1B2420; --ink:#E4E8E0; --ink-soft:#97A199; --accent:#6FCDB0; --accent-warm:#E0A868; --line:#2A352F; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  main { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  .marca { font-size: 0.8rem; color: var(--ink-soft); margin-bottom: 2rem; }
+  h1 { font-family: var(--serif); font-weight: 700; font-size: 1.8rem; margin: 0 0 0.3rem; }
+  .fecha { color: var(--ink-soft); font-size: 0.88rem; margin-bottom: 2rem; }
+  .propuesta-output { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); padding: 1.6rem 1.7rem; }
+  .propuesta-output h3 { font-family: var(--serif); font-size: 1.1rem; font-weight: 600; margin: 1.3rem 0 0.5rem; }
+  .propuesta-output h3:first-child { margin-top: 0; }
+  .propuesta-output p { margin: 0.3rem 0 0.8rem; }
+  .propuesta-output ul { margin: 0.3rem 0 0.8rem; padding-left: 1.2rem; }
+  .propuesta-output li { margin: 0.2rem 0; }
+  .gantt-wrap { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); padding: 1rem 1.1rem; margin: 0.5rem 0 1rem; overflow-x: auto; }
+  .gantt-chart { min-width: 420px; }
+  .gantt-row { display: grid; grid-template-columns: 150px 1fr; gap: 0.6rem; align-items: center; padding: 0.3rem 0; }
+  .gantt-row .label { font-size: 0.83rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gantt-track { position: relative; height: 1.4rem; background: var(--paper-raised); border-radius: 2px; }
+  .gantt-bar { position: absolute; top: 2px; bottom: 2px; border-radius: 2px; font-size: 0.7rem; color: #fff; display: flex; align-items: center; padding: 0 0.4rem; overflow: hidden; white-space: nowrap; }
+  .gantt-scale { display: grid; grid-template-columns: 150px 1fr; gap: 0.6rem; margin-bottom: 0.3rem; }
+  .gantt-scale .ticks { display: flex; font-size: 0.7rem; color: var(--ink-soft); }
+  .gantt-scale .ticks span { flex: 1; border-left: 1px solid var(--line); padding-left: 0.25rem; }
+  .gantt-legend { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }
+  .gantt-legend .item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.76rem; color: var(--ink-soft); }
+  .gantt-legend .dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; }
+  .estado-msg { text-align: center; color: var(--ink-soft); padding: 4rem 1rem; }
+</style>
+</head>
+<body>
+<main id="main">
+  <div class="estado-msg">Cargando…</div>
+</main>
+<script>
+(function () {
+  const PALETA = ['#2F6F5E', '#A6672B', '#5B6FA6', '#A64B5B', '#6E8C3E', '#8A5FA6', '#3E8C8C'];
+  function colorResponsable(nombre) {
+    const n = (nombre || 'Sin asignar').trim() || 'Sin asignar';
+    let hash = 0;
+    for (let i = 0; i < n.length; i++) hash = (hash * 31 + n.charCodeAt(i)) >>> 0;
+    return PALETA[hash % PALETA.length];
+  }
+  function escapeHtml(s) { return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  function renderGanttEstatico(tareas) {
+    if (!tareas || !tareas.length) return '';
+    const maxSemana = Math.max(1, ...tareas.map(t => t.semana_fin || t.semana_inicio || 1));
+    const responsablesUnicos = [...new Set(tareas.map(t => t.responsable || 'Sin asignar'))];
+    let html = `<div class="gantt-wrap"><div class="gantt-chart">`;
+    html += `<div class="gantt-scale"><div></div><div class="ticks">${Array.from({length: maxSemana}, (_, i) => `<span>S${i+1}</span>`).join('')}</div></div>`;
+    tareas.forEach(t => {
+      const ini = Math.max(1, t.semana_inicio || 1), fin = Math.max(ini, t.semana_fin || ini);
+      const left = ((ini - 1) / maxSemana) * 100, width = ((fin - ini + 1) / maxSemana) * 100;
+      html += `<div class="gantt-row"><div class="label" title="${escapeHtml(t.tarea)}">${escapeHtml(t.tarea)}</div>
+        <div class="gantt-track"><div class="gantt-bar" style="left:${left}%;width:${width}%;background:${colorResponsable(t.responsable)};">${escapeHtml(t.responsable||'')}</div></div></div>`;
+    });
+    html += `<div class="gantt-legend">${responsablesUnicos.map(r => `<span class="item"><span class="dot" style="background:${colorResponsable(r)}"></span>${escapeHtml(r)}</span>`).join('')}</div>`;
+    html += `</div></div>`;
+    return html;
+  }
+
+  const params = new URLSearchParams(location.search);
+  const token = params.get('token');
+  const main = document.getElementById('main');
+
+  if (!token) {
+    main.innerHTML = '<div class="estado-msg">Falta el link completo.</div>';
+    return;
+  }
+
+  fetch('/.netlify/functions/ver-propuesta?token=' + encodeURIComponent(token))
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) { main.innerHTML = '<div class="estado-msg">Este link no es válido o ya no está disponible.</div>'; return; }
+      let contenido = data.contenido;
+      if (typeof contenido === 'string') { try { contenido = JSON.parse(contenido); } catch { contenido = null; } }
+      if (!contenido) { main.innerHTML = '<div class="estado-msg">No se pudo mostrar esta propuesta.</div>'; return; }
+
+      const criterios = (contenido.criterios_exito || '').split('\n').map(l => l.replace(/^[-*]\s*/, '').trim()).filter(Boolean);
+      const fecha = data.creado_at ? new Date(data.creado_at).toLocaleDateString('es-AR') : '';
+
+      main.innerHTML = `
+        <div class="marca">Propuesta</div>
+        <h1>${escapeHtml(data.cliente_texto || '')}</h1>
+        <div class="fecha">${fecha}</div>
+        <div class="propuesta-output">
+          <h3>Dolor en una línea</h3><p>${escapeHtml(contenido.dolor || '')}</p>
+          <h3>Solución propuesta</h3><p>${escapeHtml(contenido.solucion || '')}</p>
+          <h3>Cronograma estimado</h3>
+          ${renderGanttEstatico(data.gantt || contenido.gantt || [])}
+          <h3>Inversión</h3><p>${escapeHtml(contenido.inversion || '')}</p>
+          <h3>Costo de la inacción</h3><p>${escapeHtml(contenido.costo_inaccion || '')}</p>
+          <h3>Criterios de éxito</h3><ul>${criterios.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>
+          <h3>Próximo paso</h3><p>${escapeHtml(contenido.proximo_paso || '')}</p>
+        </div>`;
+    })
+    .catch(() => { main.innerHTML = '<div class="estado-msg">No se pudo cargar la propuesta.</div>'; });
+})();
+</script>
+</body>
+</html>

@@ -88,7 +88,48 @@ logueate con el usuario del paso 2, y probá:
 - Agregar una pregunta nueva y que quede guardada al recargar la página.
 - Pegar unas notas de prueba y generar una propuesta.
 
-## Notas de seguridad
+## 7. Compartir propuestas con el cliente (opcional)
+
+Para que el botón "Compartir con el cliente" funcione, hace falta un paso
+más de configuración — usa una key distinta a la anon key, así que no
+alcanza con lo del paso 5.
+
+1. Corré `supabase_migracion_shares.sql` en el SQL Editor.
+2. Dashboard de Supabase → Project Settings → API → copiá la key
+   **`service_role`** (no la `anon` — está marcada como secreta, con un
+   botón de "reveal"/"mostrar").
+3. En Netlify → Site configuration → Environment variables, agregá:
+
+| Variable | Valor |
+|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | la key del paso anterior |
+
+4. Redeploy (Deploys → Trigger deploy).
+
+**Importante sobre esta key**: a diferencia de la anon key, la
+`service_role` se salta todos los permisos (RLS) — por eso vive *solo*
+como variable de entorno de la función `ver-propuesta.js`, nunca en
+`index.html` ni en ningún archivo que se suba al navegador. Si alguna vez
+sospechás que se filtró, se rota desde el mismo lugar donde la copiaste.
+
+El botón "Compartir" genera un link único por propuesta (`/ver.html?token=...`)
+que cualquiera con ese link puede ver, sin loguearse — pensado para
+mandárselo al cliente. "Abrir borrador de mail" simplemente te arma el
+mail en tu propio cliente de correo (Gmail, Outlook, lo que tengas
+configurado como default) con el link ya pegado — no manda nada solo, así
+no hace falta contratar ningún servicio de envío de mails para esto.
+
+## 8. Subir archivos a la base de conocimiento
+
+La pestaña Conocimiento acepta PDF y Word (`.docx`) — al elegir un
+archivo, se extrae el texto en el propio navegador (con `pdf.js` para PDF
+y `mammoth` para `.docx`, cargados desde jsdelivr, no hace falta instalar
+nada) y lo deja precargado en el campo de contenido para que lo revises
+antes de guardar. El `.doc` viejo (formato binario, no `.docx`) no se
+puede leer así — o lo convertís a `.docx`/PDF primero, o pegás el texto a
+mano. Un PDF escaneado (solo imagen, sin texto real) tampoco va a andar,
+porque no hace OCR.
+
 
 - La clave de Anthropic vive **solo** como variable de entorno de la
   función de Netlify — nunca llega al navegador. La función
