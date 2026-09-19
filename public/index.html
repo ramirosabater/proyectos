@@ -150,6 +150,17 @@
   .proyecto-row .cantidad { font-size: 0.82rem; color: var(--ink-soft); justify-self: end; }
   .proyecto-detalle { border: 1px solid var(--line); border-top: none; border-radius: 0 0 var(--radius) var(--radius); background: var(--paper); padding: 1rem 1.1rem; }
   .proyecto-detalle .historial-item { background: var(--paper-raised); padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 0.5rem; }
+
+  .metricas-bar { display: flex; gap: 1.4rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
+  .metrica { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); padding: 0.7rem 1rem; }
+  .metrica .num { font-family: var(--serif); font-weight: 700; font-size: 1.3rem; }
+  .metrica .label { font-size: 0.76rem; color: var(--ink-soft); }
+  .seguimiento-banner { border: 1px solid var(--accent-warm); border-radius: var(--radius); background: var(--paper-raised); padding: 0.8rem 1rem; margin-bottom: 1.1rem; font-size: 0.86rem; }
+  .seguimiento-banner strong { color: var(--accent-warm); }
+
+  .archivos-list { margin-top: 0.8rem; }
+  .archivo-item { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--line); font-size: 0.85rem; }
+  .archivo-item a { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -190,6 +201,7 @@
     <button id="tabRelevarBtn" class="active">Relevar</button>
     <button id="tabProyectosBtn">Proyectos</button>
     <button id="tabConocimientoBtn">Conocimiento</button>
+    <button id="tabAjustesBtn">Ajustes</button>
   </nav>
 
   <main class="view active" id="viewRelevar">
@@ -247,6 +259,8 @@
     <h2 style="font-family:var(--serif);font-weight:600;font-size:1.2rem;margin:0 0 0.2rem;">Proyectos</h2>
     <p class="hint" style="color:var(--ink-soft);font-size:0.88rem;margin:0 0 1.1rem;">Clientes de Cartera Viva con las propuestas que les generaste, ordenados por actividad más reciente.</p>
     <input type="text" id="buscarProyectoInput" placeholder="Buscar por nombre..." style="width:100%;margin-bottom:1.1rem;">
+    <div id="metricasWrap"></div>
+    <div id="seguimientoWrap"></div>
     <div class="proyectos-list" id="proyectosList2"></div>
   </div>
 
@@ -283,6 +297,28 @@
     </div>
 
     <div id="conocimientoList"></div>
+  </div>
+
+  <div class="view" id="viewAjustes" style="max-width:720px;margin:0 auto;padding:2rem 1.75rem 4rem;">
+    <h2 style="font-family:var(--serif);font-weight:600;font-size:1.2rem;margin:0 0 0.2rem;">Ajustes</h2>
+    <p class="hint" style="color:var(--ink-soft);font-size:0.88rem;margin:0 0 1.25rem;">Tu marca, para que aparezca en las propuestas que le mandás al cliente y en los PDF. Y tu tarifa por hora, para la calculadora de inversión.</p>
+    <div class="preguntas-panel">
+      <div class="form-row">
+        <label for="ajNombreNegocio">Nombre del negocio / consultora</label>
+        <input type="text" id="ajNombreNegocio" placeholder="Ej. Ramiro Sabater — Consultoría IA">
+      </div>
+      <div class="form-row">
+        <label for="ajLogo">Logo (opcional)</label>
+        <input type="file" id="ajLogo" accept="image/*">
+        <div style="margin-top:0.6rem;"><img id="ajLogoPreview" src="" alt="" style="max-height:48px;display:none;"></div>
+      </div>
+      <div class="form-row">
+        <label for="ajTarifa">Tu tarifa por hora (para la calculadora de inversión)</label>
+        <input type="text" id="ajTarifa" inputmode="numeric" placeholder="Ej. 45000">
+      </div>
+      <button class="primary" id="ajGuardarBtn">Guardar ajustes</button>
+      <span class="gantt-saved" id="ajGuardadoMsg" style="margin-left:0.6rem;"></span>
+    </div>
   </div>
 </div>
 
@@ -345,6 +381,7 @@
     await cargarTemas();
     await cargarProyectos();
     await cargarHistorial();
+    await cargarConfiguracion();
   }
 
   (async function boot() {
@@ -526,7 +563,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
       }).select().single();
       if (insErr) throw insErr;
 
-      propuestaActual = { id: inserted.id, ...parsed };
+      propuestaActual = { id: inserted.id, estado: inserted.estado, ...parsed };
       mostrarPropuesta(propuestaActual);
       await cargarHistorial();
     } catch (e) {
@@ -545,29 +582,124 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
 
   function mostrarPropuesta(p) {
     propuestaActual = p;
+    outputWrap.innerHTML = '';
+    renderPropuestaVista(p, false);
+  }
+
+  function renderPropuestaVista(p, editando) {
     const criterios = (p.criterios_exito || '').split('\n').map(l => l.replace(/^[-*]\s*/, '').trim()).filter(Boolean);
+    const badgeEstado = p.estado === 'aceptada' ? '<span class="tag-warm" style="color:var(--accent);border-color:var(--accent);">✓ Aceptada</span>' : '';
+
+    if (!editando) {
+      outputWrap.innerHTML = `
+        <div class="propuesta-output">
+          <div style="display:flex;justify-content:flex-end;">${badgeEstado}</div>
+          <h3>Dolor en una línea</h3><p>${escapeHtml(p.dolor || '')}</p>
+          <h3>Solución propuesta</h3><p>${escapeHtml(p.solucion || '')}</p>
+          <h3>Gantt estimado</h3>
+          <div id="ganttWrap"></div>
+          <h3>Inversión</h3><p>${escapeHtml(p.inversion || '')}</p>
+          <h3>Costo de la inacción</h3><p>${escapeHtml(p.costo_inaccion || '')}</p>
+          <h3>Criterios de éxito</h3><ul>${criterios.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>
+          <h3>Próximo paso concreto</h3><p>${escapeHtml(p.proximo_paso || '')}</p>
+        </div>
+        <div class="propuesta-actions">
+          <button id="editarTextoBtn">Editar texto</button>
+          <button id="copiarBtn">Copiar como texto</button>
+          <button id="compartirBtn">Compartir con el cliente</button>
+        </div>
+        <div id="compartirPanel"></div>`;
+      renderGantt(p.gantt || [], document.getElementById('ganttWrap'), p.id);
+      document.getElementById('editarTextoBtn').onclick = () => renderPropuestaVista(p, true);
+      document.getElementById('copiarBtn').onclick = () => {
+        const texto = `DOLOR: ${p.dolor}\n\nSOLUCIÓN: ${p.solucion}\n\nGANTT:\n${(p.gantt||[]).map(g=>`- ${g.tarea} (semana ${g.semana_inicio}-${g.semana_fin}, responsable: ${g.responsable})`).join('\n')}\n\nINVERSIÓN: ${p.inversion}\n\nCOSTO DE LA INACCIÓN: ${p.costo_inaccion}\n\nCRITERIOS DE ÉXITO:\n${p.criterios_exito}\n\nPRÓXIMO PASO: ${p.proximo_paso}`;
+        navigator.clipboard.writeText(texto).catch(() => {});
+      };
+      document.getElementById('compartirBtn').onclick = () => abrirPanelCompartir(p);
+      return;
+    }
+
+    // ---- modo edición ----
+    const tarifaDefault = configuracionCache.tarifa_hora || '';
     outputWrap.innerHTML = `
       <div class="propuesta-output">
-        <h3>Dolor en una línea</h3><p>${escapeHtml(p.dolor || '')}</p>
-        <h3>Solución propuesta</h3><p>${escapeHtml(p.solucion || '')}</p>
+        <h3>Dolor en una línea</h3><textarea rows="2" id="edDolor">${escapeHtml(p.dolor || '')}</textarea>
+        <h3>Solución propuesta</h3><textarea rows="3" id="edSolucion">${escapeHtml(p.solucion || '')}</textarea>
         <h3>Gantt estimado</h3>
         <div id="ganttWrap"></div>
-        <h3>Inversión</h3><p>${escapeHtml(p.inversion || '')}</p>
-        <h3>Costo de la inacción</h3><p>${escapeHtml(p.costo_inaccion || '')}</p>
-        <h3>Criterios de éxito</h3><ul>${criterios.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>
-        <h3>Próximo paso concreto</h3><p>${escapeHtml(p.proximo_paso || '')}</p>
+        <h3>Inversión</h3>
+        <div style="display:flex;gap:1rem;margin-bottom:0.5rem;font-size:0.85rem;">
+          <label><input type="radio" name="edModoInv" value="texto" checked> Texto libre</label>
+          <label><input type="radio" name="edModoInv" value="fijo"> Monto fijo</label>
+          <label><input type="radio" name="edModoInv" value="horas"> Por horas</label>
+        </div>
+        <div id="edInvCalc" style="display:none;margin-bottom:0.6rem;">
+          <div class="form-row two">
+            <div id="edInvFijoWrap" style="display:none;"><label>Monto (ARS)</label><input type="text" inputmode="numeric" id="edInvMonto" placeholder="Ej. 850000"></div>
+            <div id="edInvHorasWrap" style="display:none;"><label>Horas estimadas</label><input type="text" inputmode="numeric" id="edInvHoras" placeholder="Ej. 20"></div>
+            <div id="edInvTarifaWrap" style="display:none;"><label>Tarifa por hora (ARS)</label><input type="text" inputmode="numeric" id="edInvTarifa" value="${escapeHtml(String(tarifaDefault))}"></div>
+          </div>
+        </div>
+        <textarea rows="2" id="edInversion">${escapeHtml(p.inversion || '')}</textarea>
+        <h3>Costo de la inacción</h3><textarea rows="3" id="edCostoInaccion">${escapeHtml(p.costo_inaccion || '')}</textarea>
+        <h3>Criterios de éxito</h3>
+        <p class="hint" style="margin:0 0 0.3rem;">Uno por línea.</p>
+        <textarea rows="4" id="edCriterios">${escapeHtml(criterios.join('\n'))}</textarea>
+        <h3>Próximo paso concreto</h3><textarea rows="2" id="edProximoPaso">${escapeHtml(p.proximo_paso || '')}</textarea>
       </div>
       <div class="propuesta-actions">
-        <button id="copiarBtn">Copiar como texto</button>
-        <button id="compartirBtn">Compartir con el cliente</button>
-      </div>
-      <div id="compartirPanel"></div>`;
+        <button class="primary" id="guardarTextoBtn">Guardar cambios</button>
+        <button id="cancelarEdicionBtn">Cancelar</button>
+      </div>`;
     renderGantt(p.gantt || [], document.getElementById('ganttWrap'), p.id);
-    document.getElementById('copiarBtn').onclick = () => {
-      const texto = `DOLOR: ${p.dolor}\n\nSOLUCIÓN: ${p.solucion}\n\nGANTT:\n${(p.gantt||[]).map(g=>`- ${g.tarea} (semana ${g.semana_inicio}-${g.semana_fin}, responsable: ${g.responsable})`).join('\n')}\n\nINVERSIÓN: ${p.inversion}\n\nCOSTO DE LA INACCIÓN: ${p.costo_inaccion}\n\nCRITERIOS DE ÉXITO:\n${p.criterios_exito}\n\nPRÓXIMO PASO: ${p.proximo_paso}`;
-      navigator.clipboard.writeText(texto).catch(() => {});
+
+    const radios = outputWrap.querySelectorAll('input[name="edModoInv"]');
+    const calcWrap = document.getElementById('edInvCalc');
+    const fijoWrap = document.getElementById('edInvFijoWrap');
+    const horasWrap = document.getElementById('edInvHorasWrap');
+    const tarifaWrap = document.getElementById('edInvTarifaWrap');
+    const edInversion = document.getElementById('edInversion');
+
+    function actualizarCalculo() {
+      const modo = outputWrap.querySelector('input[name="edModoInv"]:checked').value;
+      calcWrap.style.display = modo === 'texto' ? 'none' : '';
+      fijoWrap.style.display = modo === 'fijo' ? '' : 'none';
+      horasWrap.style.display = modo === 'horas' ? '' : 'none';
+      tarifaWrap.style.display = modo === 'horas' ? '' : 'none';
+      if (modo === 'fijo') {
+        const monto = document.getElementById('edInvMonto').value.trim();
+        if (monto) edInversion.value = `$${Number(monto.replace(/\D/g,'')).toLocaleString('es-AR')} (monto cerrado)`;
+      } else if (modo === 'horas') {
+        const horas = parseFloat(document.getElementById('edInvHoras').value) || 0;
+        const tarifa = parseFloat(document.getElementById('edInvTarifa').value) || 0;
+        if (horas && tarifa) edInversion.value = `${horas} horas estimadas × $${tarifa.toLocaleString('es-AR')}/hora = $${(horas*tarifa).toLocaleString('es-AR')}`;
+      }
+    }
+    radios.forEach(r => r.onchange = actualizarCalculo);
+    ['edInvMonto', 'edInvHoras', 'edInvTarifa'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', actualizarCalculo);
+    });
+
+    document.getElementById('cancelarEdicionBtn').onclick = () => renderPropuestaVista(p, false);
+    document.getElementById('guardarTextoBtn').onclick = async () => {
+      const actualizado = {
+        ...p,
+        dolor: document.getElementById('edDolor').value.trim(),
+        solucion: document.getElementById('edSolucion').value.trim(),
+        inversion: edInversion.value.trim(),
+        costo_inaccion: document.getElementById('edCostoInaccion').value.trim(),
+        criterios_exito: document.getElementById('edCriterios').value.trim().split('\n').map(l => l.trim()).filter(Boolean).map(l => '- ' + l).join('\n'),
+        proximo_paso: document.getElementById('edProximoPaso').value.trim(),
+      };
+      if (p.id) {
+        const { id, gantt, ...contenido } = actualizado;
+        await sb.from('propuestas').update({ contenido: JSON.stringify(contenido) }).eq('id', p.id);
+      }
+      propuestaActual = actualizado;
+      renderPropuestaVista(actualizado, false);
+      await cargarHistorial();
     };
-    document.getElementById('compartirBtn').onclick = () => abrirPanelCompartir(p);
   }
 
   async function abrirPanelCompartir(p) {
@@ -676,15 +808,61 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
       item.className = 'historial-item';
       const temaNombre = (temas.find(t => t.id === row.tema_id) || {}).nombre;
       const fecha = row.creado_at ? new Date(row.creado_at).toLocaleDateString('es-AR') : '';
-      item.innerHTML = `<span class="cliente">${escapeHtml(row.cliente_texto || '(sin cliente)')}${temaNombre ? `<span class="tag-warm">${escapeHtml(temaNombre)}</span>` : ''}</span><span class="fecha">${fecha}</span>`;
+      item.innerHTML = `<span class="cliente">${escapeHtml(row.cliente_texto || '(sin cliente)')}${temaNombre ? `<span class="tag-warm">${escapeHtml(temaNombre)}</span>` : ''}${row.estado === 'aceptada' ? '<span class="tag-warm" style="color:var(--accent);border-color:var(--accent);">✓</span>' : ''}</span><span class="fecha">${fecha}</span>`;
       item.onclick = () => {
         const contenido = typeof row.contenido === 'string' ? parsearJsonTolerante(row.contenido) : row.contenido;
         if (!contenido) return;
-        mostrarPropuesta({ id: row.id, ...contenido, gantt: row.gantt || contenido.gantt || [] });
+        mostrarPropuesta({ id: row.id, estado: row.estado, ...contenido, gantt: row.gantt || contenido.gantt || [] });
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
       historialList.appendChild(item);
     });
+  }
+
+  // ========== ARCHIVOS ADJUNTOS (Supabase Storage) ==========
+  function prefijoStorage(f) {
+    return (f.id || '').toString().replace(/[^a-zA-Z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'sin-id';
+  }
+
+  async function cargarArchivosProyecto(f, contenedor) {
+    const prefijo = prefijoStorage(f);
+    const { data, error } = await sb.storage.from('adjuntos-proyecto').list(prefijo, { sortBy: { column: 'created_at', order: 'desc' } });
+    if (error) { contenedor.innerHTML = '<div class="empty-note">No se pudo cargar (¿falta correr la migración de archivos?).</div>'; return; }
+    if (!data || !data.length) { contenedor.innerHTML = '<div class="empty-note">Sin archivos todavía.</div>'; return; }
+    contenedor.innerHTML = data.map(file => `
+      <div class="archivo-item" data-name="${escapeHtml(file.name)}">
+        <span>${escapeHtml(file.name.replace(/^\d+-/, ''))}</span>
+        <span><a href="#" class="ver-archivo">Ver</a> · <a href="#" class="borrar-archivo">Borrar</a></span>
+      </div>`).join('');
+    contenedor.querySelectorAll('.ver-archivo').forEach(a => {
+      a.onclick = async (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        const name = a.closest('.archivo-item').dataset.name;
+        const { data: signed } = await sb.storage.from('adjuntos-proyecto').createSignedUrl(`${prefijo}/${name}`, 3600);
+        if (signed) window.open(signed.signedUrl, '_blank');
+      };
+    });
+    contenedor.querySelectorAll('.borrar-archivo').forEach(a => {
+      a.onclick = async (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        const name = a.closest('.archivo-item').dataset.name;
+        if (!confirm('¿Borrar este archivo?')) return;
+        await sb.storage.from('adjuntos-proyecto').remove([`${prefijo}/${name}`]);
+        cargarArchivosProyecto(f, contenedor);
+      };
+    });
+  }
+
+  async function subirArchivoProyecto(f, slot) {
+    const input = slot.querySelector('#archivoInput');
+    const file = input.files[0];
+    if (!file) return;
+    const prefijo = prefijoStorage(f);
+    const path = `${prefijo}/${Date.now()}-${file.name}`;
+    const { error } = await sb.storage.from('adjuntos-proyecto').upload(path, file);
+    if (error) { alert('No se pudo subir el archivo.'); return; }
+    input.value = '';
+    cargarArchivosProyecto(f, slot.querySelector('#archivosList'));
   }
 
   // ========== DESCARGAR PDF DE UN PROYECTO (via impresión del navegador) ==========
@@ -738,7 +916,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
       <title>${escapeHtml(f.nombre)} — Cuaderno de relevamiento</title>
       <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
       <style>
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
         body { font-family:'IBM Plex Sans',-apple-system,sans-serif; color:#1B2420; padding:2rem 2.4rem; }
         h1 { font-family:'Source Serif 4',serif; font-weight:700; font-size:1.6rem; margin:0 0 0.2rem; }
         h4 { font-family:'Source Serif 4',serif; font-weight:600; font-size:0.98rem; margin:0.9rem 0 0.3rem; }
@@ -748,6 +926,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
         @media print { body { padding: 1cm; } }
       </style></head>
       <body>
+        ${(configuracionCache.nombre_negocio || configuracionCache.logo_base64) ? `<div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1.2rem;color:#5B6660;font-size:0.85rem;">${configuracionCache.logo_base64 ? `<img src="${configuracionCache.logo_base64}" style="height:26px;">` : ''}${configuracionCache.nombre_negocio ? escapeHtml(configuracionCache.nombre_negocio) : ''}</div>` : ''}
         <h1>${escapeHtml(f.nombre)}</h1>
         <div class="meta">${f.esProyectoReal ? 'Estado: ' + escapeHtml(f.estado || 'sin estado') + ' · ' : ''}${f.propuestas.length} propuesta${f.propuestas.length === 1 ? '' : 's'} · generado ${new Date().toLocaleDateString('es-AR')}</div>
         ${bloques}
@@ -765,13 +944,16 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
   const tabRelevarBtn = document.getElementById('tabRelevarBtn');
   const tabProyectosBtn = document.getElementById('tabProyectosBtn');
   const tabConocimientoBtn = document.getElementById('tabConocimientoBtn');
+  const tabAjustesBtn = document.getElementById('tabAjustesBtn');
   const viewRelevar = document.getElementById('viewRelevar');
   const viewProyectos = document.getElementById('viewProyectos');
   const viewConocimiento = document.getElementById('viewConocimiento');
+  const viewAjustes = document.getElementById('viewAjustes');
   const todasLasTabs = [
     [tabRelevarBtn, viewRelevar],
     [tabProyectosBtn, viewProyectos],
     [tabConocimientoBtn, viewConocimiento],
+    [tabAjustesBtn, viewAjustes],
   ];
   function activarTab(btnActivo, viewActiva, onActivar) {
     todasLasTabs.forEach(([b, v]) => { b.classList.toggle('active', b === btnActivo); v.classList.toggle('active', v === viewActiva); });
@@ -780,6 +962,50 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
   tabRelevarBtn.onclick = () => activarTab(tabRelevarBtn, viewRelevar);
   tabProyectosBtn.onclick = () => activarTab(tabProyectosBtn, viewProyectos, cargarVistaProyectos);
   tabConocimientoBtn.onclick = () => activarTab(tabConocimientoBtn, viewConocimiento, cargarVistaConocimiento);
+  tabAjustesBtn.onclick = () => activarTab(tabAjustesBtn, viewAjustes, cargarVistaAjustes);
+
+  // ========== AJUSTES (marca + tarifa) ==========
+  let configuracionCache = { nombre_negocio: '', logo_base64: '', tarifa_hora: null };
+  const ajNombreNegocio = document.getElementById('ajNombreNegocio');
+  const ajLogo = document.getElementById('ajLogo');
+  const ajLogoPreview = document.getElementById('ajLogoPreview');
+  const ajTarifa = document.getElementById('ajTarifa');
+  const ajGuardarBtn = document.getElementById('ajGuardarBtn');
+  const ajGuardadoMsg = document.getElementById('ajGuardadoMsg');
+
+  async function cargarConfiguracion() {
+    const { data } = await sb.from('configuracion').select('*').eq('id', '1').single();
+    if (data) configuracionCache = data;
+    return configuracionCache;
+  }
+
+  function cargarVistaAjustes() {
+    ajNombreNegocio.value = configuracionCache.nombre_negocio || '';
+    ajTarifa.value = configuracionCache.tarifa_hora || '';
+    if (configuracionCache.logo_base64) { ajLogoPreview.src = configuracionCache.logo_base64; ajLogoPreview.style.display = ''; }
+  }
+
+  ajLogo.addEventListener('change', () => {
+    const file = ajLogo.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { configuracionCache.logo_base64 = reader.result; ajLogoPreview.src = reader.result; ajLogoPreview.style.display = ''; };
+    reader.readAsDataURL(file);
+  });
+
+  ajGuardarBtn.onclick = async () => {
+    const payload = {
+      id: '1',
+      nombre_negocio: ajNombreNegocio.value.trim() || null,
+      logo_base64: configuracionCache.logo_base64 || null,
+      tarifa_hora: parseFloat(ajTarifa.value) || null,
+    };
+    const { error } = await sb.from('configuracion').upsert(payload);
+    if (error) { ajGuardadoMsg.textContent = 'No se pudo guardar.'; return; }
+    configuracionCache = payload;
+    ajGuardadoMsg.textContent = 'Guardado ✓';
+    setTimeout(() => { ajGuardadoMsg.textContent = ''; }, 2500);
+  };
 
   // ========== VISTA PROYECTOS ==========
   const proyectosList2 = document.getElementById('proyectosList2');
@@ -829,7 +1055,41 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
     });
 
     proyectosFilasCache = filas;
+    renderMetricas(propuestasData || []);
+    renderSeguimiento(filas);
     renderProyectosList();
+  }
+
+  function renderMetricas(propuestasData) {
+    const hoy = new Date();
+    const esteMes = propuestasData.filter(p => {
+      const d = p.creado_at ? new Date(p.creado_at) : null;
+      return d && d.getMonth() === hoy.getMonth() && d.getFullYear() === hoy.getFullYear();
+    }).length;
+    const aceptadas = propuestasData.filter(p => p.estado === 'aceptada').length;
+    const porTema = {};
+    propuestasData.forEach(p => {
+      const nombre = (temas.find(t => t.id === p.tema_id) || {}).nombre || 'sin tema';
+      porTema[nombre] = (porTema[nombre] || 0) + 1;
+    });
+    const temaTop = Object.entries(porTema).sort((a, b) => b[1] - a[1])[0];
+
+    document.getElementById('metricasWrap').innerHTML = `
+      <div class="metricas-bar">
+        <div class="metrica"><div class="num">${esteMes}</div><div class="label">propuestas este mes</div></div>
+        <div class="metrica"><div class="num">${aceptadas}</div><div class="label">aceptadas (total)</div></div>
+        <div class="metrica"><div class="num">${propuestasData.length}</div><div class="label">propuestas totales</div></div>
+        ${temaTop ? `<div class="metrica"><div class="num">${escapeHtml(temaTop[0])}</div><div class="label">tema más frecuente (${temaTop[1]})</div></div>` : ''}
+      </div>`;
+  }
+
+  function renderSeguimiento(filas) {
+    const QUINCE_DIAS = 15 * 24 * 60 * 60 * 1000;
+    const ahora = Date.now();
+    const estancados = filas.filter(f => f.ultimaFecha && (ahora - new Date(f.ultimaFecha).getTime()) > QUINCE_DIAS);
+    const wrap = document.getElementById('seguimientoWrap');
+    if (!estancados.length) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `<div class="seguimiento-banner"><strong>Sin actividad hace más de 15 días:</strong> ${estancados.map(f => escapeHtml(f.nombre)).join(', ')}</div>`;
   }
 
   function renderProyectosList() {
@@ -879,9 +1139,20 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
         <button id="descargarPdfBtn">Descargar PDF</button>
       </div>`;
 
-    slot.innerHTML = `<div class="proyecto-detalle">${accionesProyecto}<div>${listaPropuestas}</div></div>`;
+    slot.innerHTML = `<div class="proyecto-detalle">${accionesProyecto}<div>${listaPropuestas}</div>
+      <div class="preguntas-panel" style="margin-top:0.9rem;">
+        <div class="titulo-tema">Archivos adjuntos</div>
+        <div class="archivos-list" id="archivosList">Cargando…</div>
+        <div class="pregunta-add" style="margin-top:0.7rem;">
+          <input type="file" id="archivoInput">
+          <button id="subirArchivoBtn">Subir</button>
+        </div>
+      </div>
+    </div>`;
 
     slot.querySelector('#descargarPdfBtn').onclick = (ev) => { ev.stopPropagation(); descargarPdfProyecto(f); };
+    cargarArchivosProyecto(f, slot.querySelector('#archivosList'));
+    slot.querySelector('#subirArchivoBtn').onclick = (ev) => { ev.stopPropagation(); subirArchivoProyecto(f, slot); };
 
     slot.querySelectorAll('.historial-item').forEach(item => {
       item.onclick = (ev) => {
@@ -890,7 +1161,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
         const contenido = typeof p.contenido === 'string' ? parsearJsonTolerante(p.contenido) : p.contenido;
         if (!contenido) return;
         activarTab(tabRelevarBtn, viewRelevar);
-        mostrarPropuesta({ id: p.id, ...contenido, gantt: p.gantt || contenido.gantt || [] });
+        mostrarPropuesta({ id: p.id, estado: p.estado, ...contenido, gantt: p.gantt || contenido.gantt || [] });
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
     });

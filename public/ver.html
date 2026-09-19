@@ -35,6 +35,12 @@
   .gantt-legend { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }
   .gantt-legend .item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.76rem; color: var(--ink-soft); }
   .gantt-legend .dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; }
+  .marca { font-size: 0.8rem; color: var(--ink-soft); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.6rem; }
+  .marca img { height: 28px; width: auto; }
+  .aceptar-wrap { margin-top: 1.6rem; text-align: center; }
+  .aceptar-wrap button { font-family: var(--sans); font-weight: 600; font-size: 0.95rem; border-radius: var(--radius); border: 1px solid var(--accent); background: var(--accent); color: #fff; padding: 0.7rem 1.6rem; cursor: pointer; }
+  .aceptar-wrap button:disabled { opacity: 0.6; cursor: default; }
+  .aceptada-badge { display: inline-block; margin-top: 1.6rem; font-size: 0.88rem; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 0.4rem 1rem; }
   .estado-msg { text-align: center; color: var(--ink-soft); padding: 4rem 1rem; }
 </style>
 </head>
@@ -89,9 +95,10 @@
 
       const criterios = (contenido.criterios_exito || '').split('\n').map(l => l.replace(/^[-*]\s*/, '').trim()).filter(Boolean);
       const fecha = data.creado_at ? new Date(data.creado_at).toLocaleDateString('es-AR') : '';
+      const marca = data.marca || {};
 
       main.innerHTML = `
-        <div class="marca">Propuesta</div>
+        ${(marca.nombre_negocio || marca.logo_base64) ? `<div class="marca">${marca.logo_base64 ? `<img src="${marca.logo_base64}" alt="">` : ''}${marca.nombre_negocio ? escapeHtml(marca.nombre_negocio) : ''}</div>` : ''}
         <h1>${escapeHtml(data.cliente_texto || '')}</h1>
         <div class="fecha">${fecha}</div>
         <div class="propuesta-output">
@@ -103,7 +110,29 @@
           <h3>Costo de la inacción</h3><p>${escapeHtml(contenido.costo_inaccion || '')}</p>
           <h3>Criterios de éxito</h3><ul>${criterios.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>
           <h3>Próximo paso</h3><p>${escapeHtml(contenido.proximo_paso || '')}</p>
-        </div>`;
+        </div>
+        <div id="aceptarZona"></div>`;
+
+      const aceptarZona = document.getElementById('aceptarZona');
+      if (data.estado === 'aceptada') {
+        aceptarZona.innerHTML = '<div class="aceptar-wrap"><span class="aceptada-badge">✓ Propuesta aceptada</span></div>';
+      } else {
+        aceptarZona.innerHTML = '<div class="aceptar-wrap"><button id="aceptarBtn">Acepto la propuesta</button></div>';
+        document.getElementById('aceptarBtn').onclick = async (ev) => {
+          ev.target.disabled = true;
+          ev.target.textContent = 'Enviando…';
+          try {
+            const r = await fetch('/.netlify/functions/aceptar-propuesta', {
+              method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token }),
+            });
+            if (!r.ok) throw new Error();
+            aceptarZona.innerHTML = '<div class="aceptar-wrap"><span class="aceptada-badge">✓ Gracias — le avisamos al consultor.</span></div>';
+          } catch {
+            ev.target.disabled = false; ev.target.textContent = 'Acepto la propuesta';
+            alert('No se pudo registrar la aceptación, probá de nuevo.');
+          }
+        };
+      }
     })
     .catch(() => { main.innerHTML = '<div class="estado-msg">No se pudo cargar la propuesta.</div>'; });
 })();

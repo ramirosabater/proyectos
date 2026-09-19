@@ -32,7 +32,7 @@ exports.handler = async (event) => {
     }
 
     const propResp = await fetch(
-      `${SUPABASE_URL}/rest/v1/propuestas?id=eq.${encodeURIComponent(shares[0].propuesta_id)}&select=cliente_texto,contenido,gantt,creado_at`,
+      `${SUPABASE_URL}/rest/v1/propuestas?id=eq.${encodeURIComponent(shares[0].propuesta_id)}&select=cliente_texto,contenido,gantt,creado_at,estado`,
       { headers }
     );
     if (!propResp.ok) throw new Error('propuesta_lookup_failed');
@@ -41,10 +41,19 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'propuesta_no_encontrada' }) };
     }
 
+    let marca = {};
+    try {
+      const confResp = await fetch(`${SUPABASE_URL}/rest/v1/configuracion?id=eq.1&select=nombre_negocio,logo_base64`, { headers });
+      if (confResp.ok) {
+        const conf = await confResp.json();
+        if (conf.length) marca = conf[0];
+      }
+    } catch {} // la marca es opcional — si falla, seguimos sin ella
+
     return {
       statusCode: 200,
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(props[0]),
+      body: JSON.stringify({ ...props[0], marca }),
     };
   } catch (e) {
     return { statusCode: 502, body: JSON.stringify({ error: 'upstream_error' }) };
