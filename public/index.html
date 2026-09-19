@@ -108,6 +108,48 @@
   .historial-item:hover .cliente { color: var(--accent); }
   .historial-item .fecha { color: var(--ink-soft); flex-shrink: 0; }
   .tag-warm { display: inline-block; font-size: 0.76rem; color: var(--accent-warm); border: 1px solid var(--accent-warm); border-radius: 999px; padding: 0.1rem 0.55rem; margin-left: 0.4rem; }
+
+  /* ---- tabs ---- */
+  nav.tabs { max-width: 1160px; margin: 0 auto; padding: 0 1.75rem; display: flex; gap: 1.6rem; border-bottom: 1px solid var(--line); }
+  nav.tabs button { background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 0.85rem 0.1rem; font-family: var(--serif); font-size: 1rem; font-weight: 600; color: var(--ink-soft); cursor: pointer; }
+  nav.tabs button.active { color: var(--ink); border-bottom-color: var(--accent); }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ---- gantt ---- */
+  .gantt-wrap { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); padding: 1.2rem 1.3rem; margin: 0.6rem 0 1.2rem; overflow-x: auto; }
+  .gantt-chart { min-width: 480px; }
+  .gantt-row { display: grid; grid-template-columns: 160px 1fr; gap: 0.6rem; align-items: center; padding: 0.3rem 0; }
+  .gantt-row .label { font-size: 0.85rem; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gantt-track { position: relative; height: 1.5rem; background: var(--paper); border-radius: 2px; }
+  .gantt-bar { position: absolute; top: 2px; bottom: 2px; border-radius: 2px; font-size: 0.72rem; color: #fff; display: flex; align-items: center; padding: 0 0.4rem; overflow: hidden; white-space: nowrap; }
+  .gantt-scale { display: grid; grid-template-columns: 160px 1fr; gap: 0.6rem; margin-bottom: 0.4rem; }
+  .gantt-scale .ticks { display: flex; font-size: 0.72rem; color: var(--ink-soft); }
+  .gantt-scale .ticks span { flex: 1; border-left: 1px solid var(--line); padding-left: 0.25rem; }
+  .gantt-legend { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.9rem; }
+  .gantt-legend .item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--ink-soft); }
+  .gantt-legend .dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; }
+
+  table.gantt-edit { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.6rem; }
+  table.gantt-edit th { text-align: left; font-weight: 500; color: var(--ink-soft); font-size: 0.76rem; padding: 0.25rem 0.4rem; }
+  table.gantt-edit td { padding: 0.2rem 0.4rem; }
+  table.gantt-edit input { width: 100%; font-size: 0.85rem; padding: 0.3rem 0.4rem; }
+  table.gantt-edit input.semana { width: 4.2rem; }
+  table.gantt-edit button.del-row { background: none; border: none; color: var(--ink-soft); cursor: pointer; }
+  table.gantt-edit button.del-row:hover { color: var(--danger); }
+  .gantt-actions { display: flex; gap: 0.5rem; margin-top: 0.7rem; align-items: center; }
+  .gantt-saved { font-size: 0.78rem; color: var(--accent); }
+
+  /* ---- proyectos ---- */
+  .proyectos-list { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); }
+  .proyecto-row { display: grid; grid-template-columns: 1fr auto auto; gap: 1rem; align-items: center; padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .proyecto-row:last-child { border-bottom: none; }
+  .proyecto-row:hover { background: var(--paper); }
+  .proyecto-row .nombre { font-family: var(--serif); font-weight: 600; font-size: 1rem; }
+  .proyecto-row .estado { font-size: 0.78rem; color: var(--accent-warm); border: 1px solid var(--accent-warm); border-radius: 999px; padding: 0.15rem 0.6rem; justify-self: start; }
+  .proyecto-row .cantidad { font-size: 0.82rem; color: var(--ink-soft); justify-self: end; }
+  .proyecto-detalle { border: 1px solid var(--line); border-top: none; border-radius: 0 0 var(--radius) var(--radius); background: var(--paper); padding: 1rem 1.1rem; }
+  .proyecto-detalle .historial-item { background: var(--paper-raised); padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 0.5rem; }
 </style>
 </head>
 <body>
@@ -121,7 +163,6 @@
   // variable de entorno del lado del servidor.
   const SUPABASE_URL = "https://qrixqpstjwsscrjdcfzw.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyaXhxcHN0andzc2NyamRjZnp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxMjU4MjIsImV4cCI6MjEwNDcwMTgyMn0.0bRBxYxwCQMCyuAv1CG7BV7nlOz8XAffWGXKYlogME4";
-
 </script>
 
 <div id="loginScreen">
@@ -145,7 +186,13 @@
     <button id="logoutBtn">Cerrar sesión</button>
   </header>
 
-  <main>
+  <nav class="tabs">
+    <button id="tabRelevarBtn" class="active">Relevar</button>
+    <button id="tabProyectosBtn">Proyectos</button>
+    <button id="tabConocimientoBtn">Conocimiento</button>
+  </nav>
+
+  <main class="view active" id="viewRelevar">
     <section class="col" id="col-banco">
       <h2>Banco de preguntas</h2>
       <p class="hint">Elegí un tema o agregá uno nuevo. Sumale preguntas a medida que las vas usando.</p>
@@ -195,6 +242,42 @@
       </div>
     </section>
   </main>
+
+  <div class="view" id="viewProyectos" style="max-width:1160px;margin:0 auto;padding:2rem 1.75rem 4rem;">
+    <h2 style="font-family:var(--serif);font-weight:600;font-size:1.2rem;margin:0 0 0.2rem;">Proyectos</h2>
+    <p class="hint" style="color:var(--ink-soft);font-size:0.88rem;margin:0 0 1.25rem;">Clientes de Cartera Viva con las propuestas que les generaste. Click en uno para ver el detalle.</p>
+    <div class="proyectos-list" id="proyectosList2"></div>
+  </div>
+
+  <div class="view" id="viewConocimiento" style="max-width:1160px;margin:0 auto;padding:2rem 1.75rem 4rem;">
+    <h2 style="font-family:var(--serif);font-weight:600;font-size:1.2rem;margin:0 0 0.2rem;">Conocimiento acumulado</h2>
+    <p class="hint" style="color:var(--ink-soft);font-size:0.88rem;margin:0 0 1.25rem;">Casos, benchmarks o aprendizajes por tema — se usan como contexto extra cada vez que generás una propuesta de ese tema.</p>
+
+    <div class="temas-list" id="conocimientoTemasList"></div>
+
+    <div class="preguntas-panel" style="margin-bottom:1.6rem;">
+      <div class="titulo-tema">Agregar entrada</div>
+      <div class="form-row">
+        <label for="conoTemaSelect">Tema</label>
+        <select id="conoTemaSelect"><option value="">— sin tema específico —</option></select>
+      </div>
+      <div class="form-row">
+        <label for="conoTitulo">Título</label>
+        <input type="text" id="conoTitulo" placeholder="Ej. Benchmark de tiempo de facturación en metalúrgicas chicas">
+      </div>
+      <div class="form-row">
+        <label for="conoContenido">Contenido</label>
+        <textarea id="conoContenido" rows="5" placeholder="Pegá acá el caso, el dato o lo que quieras que quede guardado..."></textarea>
+      </div>
+      <div class="form-row">
+        <label for="conoFuente">Fuente (opcional)</label>
+        <input type="text" id="conoFuente" placeholder="Ej. reunión con Metalúrgica Andina, investigación web, un link...">
+      </div>
+      <button class="primary" id="conoGuardarBtn">Guardar</button>
+    </div>
+
+    <div id="conocimientoList"></div>
+  </div>
 </div>
 
 <script>
@@ -354,33 +437,23 @@
     return hit ? hit.id : null;
   }
 
-  // ========== GENERADOR DE PROPUESTA ==========
-  function renderPropuestaMarkdown(md) {
-    const lines = md.split('\n');
-    let html = '', inTable = false, inList = false, tableHeaderDone = false;
-    function closeList() { if (inList) { html += '</ul>'; inList = false; } }
-    function closeTable() { if (inTable) { html += '</table>'; inTable = false; tableHeaderDone = false; } }
-    for (let raw of lines) {
-      const line = raw.trim();
-      if (line.startsWith('## ')) { closeList(); closeTable(); html += `<h3>${escapeHtml(line.slice(3))}</h3>`; }
-      else if (line.startsWith('|')) {
-        closeList();
-        const cells = line.split('|').map(c => c.trim()).filter((c, i, arr) => !(i === 0 && c === '') && !(i === arr.length - 1 && c === ''));
-        if (cells.every(c => /^-+$/.test(c))) continue;
-        if (!inTable) { html += '<table>'; inTable = true; tableHeaderDone = false; }
-        if (!tableHeaderDone) { html += '<tr>' + cells.map(c => `<th>${escapeHtml(c)}</th>`).join('') + '</tr>'; tableHeaderDone = true; }
-        else { html += '<tr>' + cells.map(c => `<td>${escapeHtml(c)}</td>`).join('') + '</tr>'; }
-      } else if (/^[-*]\s+/.test(line)) { closeTable(); if (!inList) { html += '<ul>'; inList = true; } html += `<li>${escapeHtml(line.replace(/^[-*]\s+/, ''))}</li>`; }
-      else if (line === '') { closeList(); closeTable(); }
-      else { closeList(); closeTable(); html += `<p>${escapeHtml(line).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</p>`; }
-    }
-    closeList(); closeTable();
-    return html;
+  // ========== GENERADOR DE PROPUESTA (JSON estructurado) ==========
+  let propuestaActual = null; // { id, dolor, solucion, gantt: [...], inversion, costo_inaccion, criterios_exito, proximo_paso }
+
+  const PALETA = ['#2F6F5E', '#A6672B', '#5B6FA6', '#A64B5B', '#6E8C3E', '#8A5FA6', '#3E8C8C'];
+  function colorResponsable(nombre) {
+    const n = (nombre || 'Sin asignar').trim() || 'Sin asignar';
+    let hash = 0;
+    for (let i = 0; i < n.length; i++) hash = (hash * 31 + n.charCodeAt(i)) >>> 0;
+    return PALETA[hash % PALETA.length];
   }
 
-  function promptPropuesta(cliente, temaNombre, preguntasTema, notas) {
+  function promptPropuesta(cliente, temaNombre, preguntasTema, notas, conocimiento) {
     const lista = (preguntasTema || []).map(p => '- ' + p.texto).join('\n') || '(sin preguntas cargadas para este tema)';
-    return `Sos consultor senior de un proyecto de diagnóstico de IA para una pyme. Te paso las notas de una reunión de relevamiento y armá la propuesta comercial en el formato fijo de 7 secciones, corta y fácil de leer (no un documento de 8 hojas), sin detalle técnico ni anexos legales. Español rioplatense.
+    const conocimientoTxt = (conocimiento && conocimiento.length)
+      ? conocimiento.map(c => `- ${c.titulo}${c.fuente ? ' (' + c.fuente + ')' : ''}: ${c.contenido}`).join('\n')
+      : '(sin conocimiento acumulado todavía para este tema)';
+    return `Sos consultor senior de un proyecto de diagnóstico de IA para una pyme. Te paso las notas de una reunión de relevamiento y armá la propuesta comercial en el formato fijo de 7 secciones, corta y fácil de leer, sin detalle técnico ni anexos legales. Español rioplatense.
 
 Cliente: ${cliente || '(no indicado)'}
 Tema relevado: ${temaNombre || '(no indicado)'}
@@ -388,20 +461,27 @@ Tema relevado: ${temaNombre || '(no indicado)'}
 Preguntas que se buscaba cubrir en esta reunión (referencia, no todas tienen por qué tener respuesta en las notas):
 ${lista}
 
+Conocimiento acumulado de casos anteriores en este tema (usalo como referencia para calibrar estimaciones y sugerir soluciones probadas — no lo repitas textual, y no lo apliques si no es realmente relevante a este caso puntual):
+${conocimientoTxt}
+
 Notas de la reunión:
 ${notas}
 
-Devolvé la propuesta en markdown con EXACTAMENTE esta estructura (una sección por header ##, sin inventar datos que no estén en las notas):
+Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fences de markdown) con esta forma exacta:
 
-## Dolor en una línea
-## Solución propuesta
-## Gantt estimado
-(como lista de etapas con duración aproximada, ej. "- Semana 1-2: ...")
-## Inversión
-(si no se relevó un número, escribí "a definir" en vez de inventarlo)
-## Costo de la inacción
-## Criterios de éxito
-## Próximo paso concreto`;
+{
+  "dolor": "string — el dolor en una línea",
+  "solucion": "string — la solución propuesta, un párrafo corto",
+  "gantt": [
+    {"tarea": "string — nombre de la etapa", "semana_inicio": number, "semana_fin": number, "responsable": "string — a quién le corresponde (rol o nombre; 'Consultor' o 'Cliente' si no hay nombre propio)"}
+  ],
+  "inversion": "string — si no se relevó un número, escribí 'a definir', nunca lo inventes",
+  "costo_inaccion": "string — un párrafo corto",
+  "criterios_exito": "string — lista en texto plano, separada por saltos de línea con '- ' al inicio de cada uno",
+  "proximo_paso": "string — un paso concreto"
+}
+
+El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como números enteros (semana 1, 2, 3...), y cada etapa con un responsable asignado (no lo dejes vacío).`;
   }
 
   async function generarPropuesta() {
@@ -416,7 +496,8 @@ Devolvé la propuesta en markdown con EXACTAMENTE esta estructura (una sección 
     try {
       const { data: sessionData } = await sb.auth.getSession();
       const token = sessionData.session && sessionData.session.access_token;
-      const prompt = promptPropuesta(cliente, tema ? tema.nombre : '', tema ? tema.preguntas : [], notas);
+      const conocimiento = await conocimientoParaTema(temaId);
+      const prompt = promptPropuesta(cliente, tema ? tema.nombre : '', tema ? tema.preguntas : [], notas, conocimiento);
 
       const resp = await fetch('/.netlify/functions/generar-propuesta', {
         method: 'POST',
@@ -426,15 +507,21 @@ Devolvé la propuesta en markdown con EXACTAMENTE esta estructura (una sección 
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'error');
 
-      ultimaPropuestaTexto = data.text;
-      mostrarPropuesta(data.text);
+      const parsed = parsearJsonTolerante(data.text);
+      if (!parsed) throw new Error('invalid_json');
 
-      await sb.from('propuestas').insert({
+      const { data: inserted, error: insErr } = await sb.from('propuestas').insert({
         proyecto_id: proyectoIdPorNombre(cliente),
         cliente_texto: cliente || null,
         tema_id: temaId || null,
-        notas, contenido: data.text,
-      });
+        notas,
+        contenido: JSON.stringify(parsed),
+        gantt: parsed.gantt || [],
+      }).select().single();
+      if (insErr) throw insErr;
+
+      propuestaActual = { id: inserted.id, ...parsed };
+      mostrarPropuesta(propuestaActual);
       await cargarHistorial();
     } catch (e) {
       outputWrap.innerHTML = `<div class="placeholder">No se pudo generar la propuesta. Probá de nuevo en un momento.</div>`;
@@ -443,11 +530,100 @@ Devolvé la propuesta en markdown con EXACTAMENTE esta estructura (una sección 
     }
   }
 
-  function mostrarPropuesta(text) {
+  function parsearJsonTolerante(text) {
+    try { return JSON.parse(text); } catch {}
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch {} }
+    return null;
+  }
+
+  function mostrarPropuesta(p) {
+    propuestaActual = p;
+    const criterios = (p.criterios_exito || '').split('\n').map(l => l.replace(/^[-*]\s*/, '').trim()).filter(Boolean);
     outputWrap.innerHTML = `
-      <div class="propuesta-output">${renderPropuestaMarkdown(text)}</div>
-      <div class="propuesta-actions"><button id="copiarBtn">Copiar</button></div>`;
-    document.getElementById('copiarBtn').onclick = () => navigator.clipboard.writeText(ultimaPropuestaTexto).catch(() => {});
+      <div class="propuesta-output">
+        <h3>Dolor en una línea</h3><p>${escapeHtml(p.dolor || '')}</p>
+        <h3>Solución propuesta</h3><p>${escapeHtml(p.solucion || '')}</p>
+        <h3>Gantt estimado</h3>
+        <div id="ganttWrap"></div>
+        <h3>Inversión</h3><p>${escapeHtml(p.inversion || '')}</p>
+        <h3>Costo de la inacción</h3><p>${escapeHtml(p.costo_inaccion || '')}</p>
+        <h3>Criterios de éxito</h3><ul>${criterios.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>
+        <h3>Próximo paso concreto</h3><p>${escapeHtml(p.proximo_paso || '')}</p>
+      </div>
+      <div class="propuesta-actions"><button id="copiarBtn">Copiar como texto</button></div>`;
+    renderGantt(p.gantt || [], document.getElementById('ganttWrap'), p.id);
+    document.getElementById('copiarBtn').onclick = () => {
+      const texto = `DOLOR: ${p.dolor}\n\nSOLUCIÓN: ${p.solucion}\n\nGANTT:\n${(p.gantt||[]).map(g=>`- ${g.tarea} (semana ${g.semana_inicio}-${g.semana_fin}, responsable: ${g.responsable})`).join('\n')}\n\nINVERSIÓN: ${p.inversion}\n\nCOSTO DE LA INACCIÓN: ${p.costo_inaccion}\n\nCRITERIOS DE ÉXITO:\n${p.criterios_exito}\n\nPRÓXIMO PASO: ${p.proximo_paso}`;
+      navigator.clipboard.writeText(texto).catch(() => {});
+    };
+  }
+
+  // ---------- Gantt: dibujo + tabla editable ----------
+  function renderGantt(tareas, container, propuestaId) {
+    if (!tareas.length) { container.innerHTML = '<div class="empty-note">Sin etapas.</div>'; return; }
+    const maxSemana = Math.max(1, ...tareas.map(t => t.semana_fin || t.semana_inicio || 1));
+
+    function dibujarChart() {
+      const responsablesUnicos = [...new Set(tareas.map(t => t.responsable || 'Sin asignar'))];
+      let html = `<div class="gantt-wrap"><div class="gantt-chart">`;
+      html += `<div class="gantt-scale"><div></div><div class="ticks">${Array.from({length: maxSemana}, (_, i) => `<span>S${i+1}</span>`).join('')}</div></div>`;
+      tareas.forEach(t => {
+        const ini = Math.max(1, t.semana_inicio || 1), fin = Math.max(ini, t.semana_fin || ini);
+        const left = ((ini - 1) / maxSemana) * 100, width = ((fin - ini + 1) / maxSemana) * 100;
+        html += `<div class="gantt-row"><div class="label" title="${escapeHtml(t.tarea)}">${escapeHtml(t.tarea)}</div>
+          <div class="gantt-track"><div class="gantt-bar" style="left:${left}%;width:${width}%;background:${colorResponsable(t.responsable)};" title="${escapeHtml(t.responsable||'')}">${escapeHtml(t.responsable||'')}</div></div></div>`;
+      });
+      html += `<div class="gantt-legend">${responsablesUnicos.map(r => `<span class="item"><span class="dot" style="background:${colorResponsable(r)}"></span>${escapeHtml(r)}</span>`).join('')}</div>`;
+      html += `</div></div>`;
+      return html;
+    }
+
+    function dibujarTabla() {
+      let html = `<table class="gantt-edit"><thead><tr><th>Etapa</th><th>Semana inicio</th><th>Semana fin</th><th>Responsable</th><th></th></tr></thead><tbody>`;
+      tareas.forEach((t, i) => {
+        html += `<tr data-i="${i}">
+          <td><input type="text" class="f-tarea" value="${escapeHtml(t.tarea || '')}"></td>
+          <td><input type="text" inputmode="numeric" class="f-ini semana" value="${t.semana_inicio ?? 1}"></td>
+          <td><input type="text" inputmode="numeric" class="f-fin semana" value="${t.semana_fin ?? 1}"></td>
+          <td><input type="text" class="f-resp" value="${escapeHtml(t.responsable || '')}"></td>
+          <td><button class="del-row" title="Borrar etapa">✕</button></td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      return html;
+    }
+
+    function render() {
+      container.innerHTML = dibujarChart() + dibujarTabla() +
+        `<div class="gantt-actions"><button id="ganttAddRow">+ Agregar etapa</button><button class="primary" id="ganttGuardar">Guardar cambios</button><span class="gantt-saved" id="ganttSavedMsg"></span></div>`;
+
+      container.querySelectorAll('tbody tr').forEach(tr => {
+        const i = +tr.dataset.i;
+        tr.querySelector('.f-tarea').oninput = e => { tareas[i].tarea = e.target.value; refrescarSoloChart(); };
+        tr.querySelector('.f-ini').oninput = e => { tareas[i].semana_inicio = parseInt(e.target.value) || 1; refrescarSoloChart(); };
+        tr.querySelector('.f-fin').oninput = e => { tareas[i].semana_fin = parseInt(e.target.value) || tareas[i].semana_inicio; refrescarSoloChart(); };
+        tr.querySelector('.f-resp').oninput = e => { tareas[i].responsable = e.target.value; refrescarSoloChart(); };
+        tr.querySelector('.del-row').onclick = () => { tareas.splice(i, 1); render(); };
+      });
+      document.getElementById('ganttAddRow').onclick = () => { tareas.push({ tarea: 'Nueva etapa', semana_inicio: 1, semana_fin: 1, responsable: '' }); render(); };
+      document.getElementById('ganttGuardar').onclick = async () => {
+        if (propuestaId) {
+          await sb.from('propuestas').update({ gantt: tareas }).eq('id', propuestaId);
+          if (propuestaActual) propuestaActual.gantt = tareas;
+        }
+        const msg = document.getElementById('ganttSavedMsg');
+        msg.textContent = 'Guardado ✓';
+        setTimeout(() => { if (msg) msg.textContent = ''; }, 2500);
+      };
+    }
+
+    function refrescarSoloChart() {
+      const chartDiv = container.querySelector('.gantt-wrap');
+      if (chartDiv) chartDiv.outerHTML = dibujarChart();
+    }
+
+    render();
   }
 
   async function cargarHistorial() {
@@ -461,12 +637,194 @@ Devolvé la propuesta en markdown con EXACTAMENTE esta estructura (una sección 
       const temaNombre = (temas.find(t => t.id === row.tema_id) || {}).nombre;
       const fecha = row.creado_at ? new Date(row.creado_at).toLocaleDateString('es-AR') : '';
       item.innerHTML = `<span class="cliente">${escapeHtml(row.cliente_texto || '(sin cliente)')}${temaNombre ? `<span class="tag-warm">${escapeHtml(temaNombre)}</span>` : ''}</span><span class="fecha">${fecha}</span>`;
-      item.onclick = () => { ultimaPropuestaTexto = row.contenido || ''; mostrarPropuesta(row.contenido || ''); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+      item.onclick = () => {
+        const contenido = typeof row.contenido === 'string' ? parsearJsonTolerante(row.contenido) : row.contenido;
+        if (!contenido) return;
+        mostrarPropuesta({ id: row.id, ...contenido, gantt: row.gantt || contenido.gantt || [] });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
       historialList.appendChild(item);
     });
   }
 
   generarBtn.onclick = generarPropuesta;
+
+  // ========== TABS ==========
+  const tabRelevarBtn = document.getElementById('tabRelevarBtn');
+  const tabProyectosBtn = document.getElementById('tabProyectosBtn');
+  const tabConocimientoBtn = document.getElementById('tabConocimientoBtn');
+  const viewRelevar = document.getElementById('viewRelevar');
+  const viewProyectos = document.getElementById('viewProyectos');
+  const viewConocimiento = document.getElementById('viewConocimiento');
+  const todasLasTabs = [
+    [tabRelevarBtn, viewRelevar],
+    [tabProyectosBtn, viewProyectos],
+    [tabConocimientoBtn, viewConocimiento],
+  ];
+  function activarTab(btnActivo, viewActiva, onActivar) {
+    todasLasTabs.forEach(([b, v]) => { b.classList.toggle('active', b === btnActivo); v.classList.toggle('active', v === viewActiva); });
+    if (onActivar) onActivar();
+  }
+  tabRelevarBtn.onclick = () => activarTab(tabRelevarBtn, viewRelevar);
+  tabProyectosBtn.onclick = () => activarTab(tabProyectosBtn, viewProyectos, cargarVistaProyectos);
+  tabConocimientoBtn.onclick = () => activarTab(tabConocimientoBtn, viewConocimiento, cargarVistaConocimiento);
+
+  // ========== VISTA PROYECTOS ==========
+  const proyectosList2 = document.getElementById('proyectosList2');
+
+  async function cargarVistaProyectos() {
+    proyectosList2.innerHTML = '<div class="empty-note">Cargando…</div>';
+    const { data: proyectosData, error: e1 } = await sb.from('proyectos').select('id, nombre, estado, clientes(nombre)');
+    const { data: propuestasData } = await sb.from('propuestas').select('*').order('creado_at', { ascending: false });
+    if (e1) { proyectosList2.innerHTML = '<div class="empty-note">No se pudo cargar la lista de proyectos de Cartera Viva.</div>'; return; }
+
+    const porProyecto = {};
+    (propuestasData || []).forEach(p => {
+      const key = p.proyecto_id || ('libre:' + (p.cliente_texto || ''));
+      (porProyecto[key] = porProyecto[key] || []).push(p);
+    });
+
+    const filas = (proyectosData || []).map(pr => ({
+      id: pr.id,
+      nombre: (pr.clientes && pr.clientes.nombre) || pr.nombre,
+      estado: pr.estado,
+      propuestas: porProyecto[pr.id] || [],
+    }));
+
+    Object.keys(porProyecto).forEach(key => {
+      if (key.startsWith('libre:') && key !== 'libre:') {
+        filas.push({ id: key, nombre: key.slice(6), estado: 'sin vincular', propuestas: porProyecto[key] });
+      }
+    });
+
+    if (!filas.length) { proyectosList2.innerHTML = '<div class="empty-note">Todavía no hay proyectos ni propuestas generadas.</div>'; return; }
+
+    proyectosList2.innerHTML = filas.map((f, i) => `
+      <div class="proyecto-row" data-i="${i}">
+        <span class="nombre">${escapeHtml(f.nombre || '(sin nombre)')}</span>
+        <span class="estado">${escapeHtml(f.estado || 'sin estado')}</span>
+        <span class="cantidad">${f.propuestas.length} propuesta${f.propuestas.length === 1 ? '' : 's'}</span>
+      </div>
+      <div class="proyecto-detalle-slot" data-i="${i}"></div>
+    `).join('');
+
+    proyectosList2.querySelectorAll('.proyecto-row').forEach(row => {
+      row.onclick = () => {
+        const i = +row.dataset.i;
+        const slot = proyectosList2.querySelector(`.proyecto-detalle-slot[data-i="${i}"]`);
+        if (slot.dataset.open === '1') { slot.innerHTML = ''; slot.dataset.open = '0'; return; }
+        const f = filas[i];
+        if (!f.propuestas.length) {
+          slot.innerHTML = '<div class="proyecto-detalle"><span class="empty-note">Sin propuestas generadas todavía para este proyecto.</span></div>';
+        } else {
+          slot.innerHTML = '<div class="proyecto-detalle">' + f.propuestas.map(p => {
+            const fecha = p.creado_at ? new Date(p.creado_at).toLocaleDateString('es-AR') : '';
+            return `<div class="historial-item" data-pid="${p.id}"><span class="cliente">${escapeHtml(p.cliente_texto || f.nombre)}</span><span class="fecha">${fecha}</span></div>`;
+          }).join('') + '</div>';
+          slot.querySelectorAll('.historial-item').forEach(item => {
+            item.onclick = (ev) => {
+              ev.stopPropagation();
+              const p = f.propuestas.find(x => x.id === item.dataset.pid);
+              const contenido = typeof p.contenido === 'string' ? parsearJsonTolerante(p.contenido) : p.contenido;
+              if (!contenido) return;
+              activarTab(tabRelevarBtn, viewRelevar);
+              mostrarPropuesta({ id: p.id, ...contenido, gantt: p.gantt || contenido.gantt || [] });
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+          });
+        }
+        slot.dataset.open = '1';
+      };
+    });
+  }
+
+  // ========== VISTA CONOCIMIENTO ==========
+  const conocimientoTemasList = document.getElementById('conocimientoTemasList');
+  const conoTemaSelect = document.getElementById('conoTemaSelect');
+  const conoTitulo = document.getElementById('conoTitulo');
+  const conoContenido = document.getElementById('conoContenido');
+  const conoFuente = document.getElementById('conoFuente');
+  const conoGuardarBtn = document.getElementById('conoGuardarBtn');
+  const conocimientoList = document.getElementById('conocimientoList');
+  let conocimientoTemaFiltro = null; // null = "todos"
+  let conocimientoCache = [];
+
+  function refrescarSelectsTema() {
+    const opciones = temas.map(t => `<option value="${t.id}">${escapeHtml(t.nombre)}</option>`).join('');
+    conoTemaSelect.innerHTML = '<option value="">— sin tema específico —</option>' + opciones;
+  }
+
+  async function cargarVistaConocimiento() {
+    refrescarSelectsTema();
+    renderConocimientoTemasChips();
+    const { data, error } = await sb.from('conocimiento').select('*').order('creado_at', { ascending: false });
+    if (error) { conocimientoList.innerHTML = '<div class="empty-note">No se pudo cargar el conocimiento guardado.</div>'; return; }
+    conocimientoCache = data || [];
+    renderConocimientoList();
+  }
+
+  function renderConocimientoTemasChips() {
+    conocimientoTemasList.innerHTML = '';
+    const todos = document.createElement('button');
+    todos.className = 'tema-chip' + (conocimientoTemaFiltro === null ? ' active' : '');
+    todos.textContent = 'Todos';
+    todos.onclick = () => { conocimientoTemaFiltro = null; renderConocimientoTemasChips(); renderConocimientoList(); };
+    conocimientoTemasList.appendChild(todos);
+    temas.forEach(t => {
+      const chip = document.createElement('button');
+      chip.className = 'tema-chip' + (conocimientoTemaFiltro === t.id ? ' active' : '');
+      chip.textContent = t.nombre;
+      chip.onclick = () => { conocimientoTemaFiltro = t.id; renderConocimientoTemasChips(); renderConocimientoList(); };
+      conocimientoTemasList.appendChild(chip);
+    });
+  }
+
+  function renderConocimientoList() {
+    const filtrado = conocimientoTemaFiltro ? conocimientoCache.filter(c => c.tema_id === conocimientoTemaFiltro) : conocimientoCache;
+    if (!filtrado.length) { conocimientoList.innerHTML = '<div class="empty-note">Todavía no hay nada guardado acá.</div>'; return; }
+    conocimientoList.innerHTML = filtrado.map(c => {
+      const temaNombre = (temas.find(t => t.id === c.tema_id) || {}).nombre;
+      const fecha = c.creado_at ? new Date(c.creado_at).toLocaleDateString('es-AR') : '';
+      return `
+        <div class="preguntas-panel" style="margin-bottom:0.9rem;" data-id="${c.id}">
+          <div class="titulo-tema">${escapeHtml(c.titulo)}${temaNombre ? `<span class="tag-warm">${escapeHtml(temaNombre)}</span>` : ''}</div>
+          <p style="white-space:pre-wrap;font-size:0.9rem;margin:0 0 0.6rem;">${escapeHtml(c.contenido)}</p>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="empty-note" style="padding:0;">${escapeHtml(c.fuente || '')}${c.fuente ? ' — ' : ''}${fecha}</span>
+            <button class="del-cono" data-id="${c.id}">Borrar</button>
+          </div>
+        </div>`;
+    }).join('');
+    conocimientoList.querySelectorAll('.del-cono').forEach(btn => {
+      btn.onclick = async () => {
+        await sb.from('conocimiento').delete().eq('id', btn.dataset.id);
+        conocimientoCache = conocimientoCache.filter(c => c.id !== btn.dataset.id);
+        renderConocimientoList();
+      };
+    });
+  }
+
+  conoGuardarBtn.onclick = async () => {
+    const titulo = conoTitulo.value.trim();
+    const contenido = conoContenido.value.trim();
+    if (!titulo || !contenido) return;
+    const { data, error } = await sb.from('conocimiento').insert({
+      tema_id: conoTemaSelect.value || null,
+      titulo, contenido,
+      fuente: conoFuente.value.trim() || null,
+    }).select().single();
+    if (error) { alert('No se pudo guardar.'); return; }
+    conocimientoCache.unshift(data);
+    renderConocimientoList();
+    conoTitulo.value = ''; conoContenido.value = ''; conoFuente.value = ''; conoTemaSelect.value = '';
+  };
+
+  // el generador consulta esto para sumar contexto por tema al armar la propuesta
+  async function conocimientoParaTema(temaId) {
+    if (!temaId) return [];
+    const { data } = await sb.from('conocimiento').select('*').eq('tema_id', temaId).order('creado_at', { ascending: false }).limit(6);
+    return data || [];
+  }
 })();
 </script>
 </body>
