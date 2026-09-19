@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuaderno de relevamiento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --paper: #EEF0EA; --paper-raised: #FFFFFF; --ink: #1B2420; --ink-soft: #5B6660;
+    --accent: #2F6F5E; --accent-ink: #FFFFFF; --accent-warm: #A6672B;
+    --line: #C7CDBE; --danger: #A3402F; --radius: 3px;
+    --serif: 'Source Serif 4', Georgia, serif; --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#131A17; --paper-raised:#1B2420; --ink:#E4E8E0; --ink-soft:#97A199; --accent:#6FCDB0; --accent-ink:#0E1613; --accent-warm:#E0A868; --line:#2A352F; --danger:#E08A78; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+  /* ---- login ---- */
+  #loginScreen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  }
+  #loginScreen[hidden] { display: none; }
+  #loginScreen .card {
+    width: 100%; max-width: 360px; border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--paper-raised); padding: 2rem 1.8rem;
+  }
+  #loginScreen h1 { font-family: var(--serif); font-size: 1.4rem; margin: 0 0 1.4rem; }
+  #loginScreen label { display: block; font-size: 0.82rem; color: var(--ink-soft); margin: 0.9rem 0 0.3rem; }
+  #loginScreen input { width: 100%; }
+  #loginScreen button { width: 100%; margin-top: 1.3rem; }
+  #loginError { color: var(--danger); font-size: 0.85rem; margin-top: 0.8rem; min-height: 1.1em; }
+
+  header { padding: 2rem 1.75rem 1.5rem; border-bottom: 1px solid var(--line); max-width: 1160px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+  header h1 { font-family: var(--serif); font-weight: 600; font-size: 1.8rem; margin: 0 0 0.3rem; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--ink-soft); max-width: 60ch; }
+  #logoutBtn { font-size: 0.82rem; color: var(--ink-soft); background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; }
+
+  main { max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: minmax(280px, 380px) 1px 1fr; gap: 0 2.25rem; padding: 2rem 1.75rem 4rem; align-items: start; }
+  .divider { background: var(--line); align-self: stretch; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } .divider { display: none; } }
+
+  section.col h2 { font-family: var(--serif); font-weight: 600; font-size: 1.2rem; margin: 0 0 0.2rem; }
+  section.col > .hint { color: var(--ink-soft); font-size: 0.88rem; margin: 0 0 1.25rem; }
+
+  .temas-list { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.4rem; }
+  .tema-chip { font-family: var(--sans); font-size: 0.86rem; padding: 0.4rem 0.75rem; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--ink); cursor: pointer; }
+  .tema-chip:hover { border-color: var(--accent); }
+  .tema-chip.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .tema-add { display: flex; gap: 0.4rem; margin-bottom: 1.6rem; }
+  .tema-add input { flex: 1; min-width: 0; }
+
+  .preguntas-panel { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); padding: 1.1rem 1.2rem; }
+  .preguntas-panel .titulo-tema { font-family: var(--serif); font-weight: 600; font-size: 1.02rem; margin: 0 0 0.9rem; }
+  ul.preguntas { list-style: none; margin: 0 0 1rem; padding: 0; }
+  ul.preguntas li { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.5rem 0; border-bottom: 1px solid var(--line); font-size: 0.94rem; }
+  ul.preguntas li:last-child { border-bottom: none; }
+  ul.preguntas li .box { width: 0.95rem; height: 0.95rem; border: 1.5px solid var(--ink-soft); border-radius: 2px; margin-top: 0.2rem; flex-shrink: 0; }
+  ul.preguntas li .texto { flex: 1; }
+  ul.preguntas li button.del { background: none; border: none; color: var(--ink-soft); cursor: pointer; font-size: 0.8rem; padding: 0 0.2rem; flex-shrink: 0; }
+  ul.preguntas li button.del:hover { color: var(--danger); }
+  .pregunta-add { display: flex; gap: 0.4rem; }
+  .pregunta-add input { flex: 1; min-width: 0; }
+  .empty-note { color: var(--ink-soft); font-size: 0.9rem; font-style: italic; padding: 0.6rem 0; }
+
+  input[type="text"], input[type="email"], input[type="password"], textarea, select {
+    font-family: var(--sans); font-size: 0.92rem; color: var(--ink); background: var(--paper-raised);
+    border: 1px solid var(--line); border-radius: var(--radius); padding: 0.5rem 0.65rem;
+  }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  textarea { width: 100%; resize: vertical; font-size: 0.94rem; line-height: 1.5; }
+  button { font-family: var(--sans); font-weight: 500; font-size: 0.88rem; border-radius: var(--radius); border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink); padding: 0.5rem 0.9rem; cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.primary:hover { filter: brightness(1.06); }
+
+  .form-row { margin-bottom: 1rem; }
+  .form-row label { display: block; font-size: 0.82rem; color: var(--ink-soft); margin-bottom: 0.3rem; }
+  .form-row.two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 520px) { .form-row.two { grid-template-columns: 1fr; } }
+  datalist {}
+
+  .generar-btn-row { display: flex; align-items: center; gap: 0.9rem; margin: 1.3rem 0; }
+  .thinking { color: var(--ink-soft); font-size: 0.88rem; }
+
+  .propuesta-output { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); padding: 1.3rem 1.4rem; }
+  .propuesta-output h3 { font-family: var(--serif); font-size: 1.05rem; font-weight: 600; margin: 1.1rem 0 0.4rem; }
+  .propuesta-output h3:first-child { margin-top: 0; }
+  .propuesta-output p { margin: 0.3rem 0 0.7rem; }
+  .propuesta-output table { border-collapse: collapse; width: 100%; font-size: 0.87rem; margin: 0.4rem 0 0.9rem; }
+  .propuesta-output th, .propuesta-output td { border: 1px solid var(--line); padding: 0.4rem 0.55rem; text-align: left; vertical-align: top; }
+  .propuesta-output th { background: var(--paper); font-weight: 600; }
+  .propuesta-output ul { margin: 0.3rem 0 0.7rem; padding-left: 1.2rem; }
+  .propuesta-output li { margin: 0.15rem 0; }
+  .propuesta-actions { display: flex; gap: 0.5rem; margin-top: 1.1rem; }
+  .placeholder { color: var(--ink-soft); font-size: 0.92rem; padding: 1.6rem 0.2rem; text-align: center; border: 1px dashed var(--line); border-radius: var(--radius); }
+
+  .historial { margin-top: 2.2rem; }
+  .historial h2 { font-size: 1.02rem; }
+  .historial-item { display: flex; justify-content: space-between; gap: 1rem; padding: 0.55rem 0; border-bottom: 1px solid var(--line); font-size: 0.88rem; cursor: pointer; }
+  .historial-item:hover .cliente { color: var(--accent); }
+  .historial-item .fecha { color: var(--ink-soft); flex-shrink: 0; }
+  .tag-warm { display: inline-block; font-size: 0.76rem; color: var(--accent-warm); border: 1px solid var(--accent-warm); border-radius: 999px; padding: 0.1rem 0.55rem; margin-left: 0.4rem; }
+
+  /* ---- tabs ---- */
+  nav.tabs { max-width: 1160px; margin: 0 auto; padding: 0 1.75rem; display: flex; gap: 1.6rem; border-bottom: 1px solid var(--line); }
+  nav.tabs button { background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 0.85rem 0.1rem; font-family: var(--serif); font-size: 1rem; font-weight: 600; color: var(--ink-soft); cursor: pointer; }
+  nav.tabs button.active { color: var(--ink); border-bottom-color: var(--accent); }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ---- gantt ---- */
+  .gantt-wrap { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); padding: 1.2rem 1.3rem; margin: 0.6rem 0 1.2rem; overflow-x: auto; }
+  .gantt-chart { min-width: 480px; }
+  .gantt-row { display: grid; grid-template-columns: 160px 1fr; gap: 0.6rem; align-items: center; padding: 0.3rem 0; }
+  .gantt-row .label { font-size: 0.85rem; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gantt-track { position: relative; height: 1.5rem; background: var(--paper); border-radius: 2px; }
+  .gantt-bar { position: absolute; top: 2px; bottom: 2px; border-radius: 2px; font-size: 0.72rem; color: #fff; display: flex; align-items: center; padding: 0 0.4rem; overflow: hidden; white-space: nowrap; }
+  .gantt-scale { display: grid; grid-template-columns: 160px 1fr; gap: 0.6rem; margin-bottom: 0.4rem; }
+  .gantt-scale .ticks { display: flex; font-size: 0.72rem; color: var(--ink-soft); }
+  .gantt-scale .ticks span { flex: 1; border-left: 1px solid var(--line); padding-left: 0.25rem; }
+  .gantt-legend { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.9rem; }
+  .gantt-legend .item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--ink-soft); }
+  .gantt-legend .dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; }
+
+  table.gantt-edit { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.6rem; }
+  table.gantt-edit th { text-align: left; font-weight: 500; color: var(--ink-soft); font-size: 0.76rem; padding: 0.25rem 0.4rem; }
+  table.gantt-edit td { padding: 0.2rem 0.4rem; }
+  table.gantt-edit input { width: 100%; font-size: 0.85rem; padding: 0.3rem 0.4rem; }
+  table.gantt-edit input.semana { width: 4.2rem; }
+  table.gantt-edit button.del-row { background: none; border: none; color: var(--ink-soft); cursor: pointer; }
+  table.gantt-edit button.del-row:hover { color: var(--danger); }
+  .gantt-actions { display: flex; gap: 0.5rem; margin-top: 0.7rem; align-items: center; }
+  .gantt-saved { font-size: 0.78rem; color: var(--accent); }
+
+  /* ---- proyectos ---- */
+  .proyectos-list { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); }
+  .proyecto-row { display: grid; grid-template-columns: 1fr auto auto; gap: 1rem; align-items: center; padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .proyecto-row:last-child { border-bottom: none; }
+  .proyecto-row:hover { background: var(--paper); }
+  .proyecto-row .nombre { font-family: var(--serif); font-weight: 600; font-size: 1rem; }
+  .proyecto-row .estado { font-size: 0.78rem; color: var(--accent-warm); border: 1px solid var(--accent-warm); border-radius: 999px; padding: 0.15rem 0.6rem; justify-self: start; }
+  .proyecto-row .cantidad { font-size: 0.82rem; color: var(--ink-soft); justify-self: end; }
+  .proyecto-detalle { border: 1px solid var(--line); border-top: none; border-radius: 0 0 var(--radius) var(--radius); background: var(--paper); padding: 1rem 1.1rem; }
+  .proyecto-detalle .historial-item { background: var(--paper-raised); padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 0.5rem; }
+
+  .metricas-bar { display: flex; gap: 1.4rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
+  .metrica { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); padding: 0.7rem 1rem; }
+  .metrica .num { font-family: var(--serif); font-weight: 700; font-size: 1.3rem; }
+  .metrica .label { font-size: 0.76rem; color: var(--ink-soft); }
+  .seguimiento-banner { border: 1px solid var(--accent-warm); border-radius: var(--radius); background: var(--paper-raised); padding: 0.8rem 1rem; margin-bottom: 1.1rem; font-size: 0.86rem; }
+  .seguimiento-banner strong { color: var(--accent-warm); }
+
+  .archivos-list { margin-top: 0.8rem; }
+  .archivo-item { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--line); font-size: 0.85rem; }
+  .archivo-item a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- ======== CONFIGURACIÓN — completar antes de desplegar ======== -->
+<script>
+  // La URL y la anon key de Supabase son PÚBLICAS por diseño (Supabase las
+  // protege con Row Level Security, no ocultándolas) — es seguro que vivan
+  // acá. La clave de Anthropic NUNCA va en este archivo — esa vive solo en
+  // la función de Netlify (netlify/functions/generar-propuesta.js), como
+  // variable de entorno del lado del servidor.
+  const SUPABASE_URL = "https://qrixqpstjwsscrjdcfzw.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyaXhxcHN0andzc2NyamRjZnp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxMjU4MjIsImV4cCI6MjEwNDcwMTgyMn0.0bRBxYxwCQMCyuAv1CG7BV7nlOz8XAffWGXKYlogME4";
+</script>
+
+<div id="loginScreen">
+  <form class="card" id="loginForm">
+    <h1>Cuaderno de relevamiento</h1>
+    <label for="loginEmail">Usuario</label>
+    <input type="email" id="loginEmail" autocomplete="username" required>
+    <label for="loginPassword">Contraseña</label>
+    <input type="password" id="loginPassword" autocomplete="current-password" required>
+    <button type="submit" class="primary">Entrar</button>
+    <div id="loginError"></div>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <header>
+    <div>
+      <h1>Cuaderno de relevamiento</h1>
+      <p>Preguntas por tema para llevar a la reunión, y la propuesta armada a partir de las notas que te quedaron después.</p>
+    </div>
+    <button id="logoutBtn">Cerrar sesión</button>
+  </header>
+
+  <nav class="tabs">
+    <button id="tabRelevarBtn" class="active">Relevar</button>
+    <button id="tabProyectosBtn">Proyectos</button>
+    <button id="tabConocimientoBtn">Conocimiento</button>
+    <button id="tabAjustesBtn">Ajustes</button>
+  </nav>
+
+  <main class="view active" id="viewRelevar">
+    <section class="col" id="col-banco">
+      <h2>Banco de preguntas</h2>
+      <p class="hint">Elegí un tema o agregá uno nuevo. Sumale preguntas a medida que las vas usando.</p>
+      <div class="temas-list" id="temasList"></div>
+      <div class="tema-add">
+        <input type="text" id="nuevoTemaInput" placeholder="Agregar tema nuevo (ej. Stock y logística)">
+        <button id="nuevoTemaBtn">Agregar</button>
+      </div>
+      <div class="preguntas-panel" id="preguntasPanel">
+        <div class="empty-note">Elegí o creá un tema para ver sus preguntas.</div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section class="col" id="col-generador">
+      <h2>Armar la propuesta</h2>
+      <p class="hint">Pegá las notas de la reunión (de Gemini o las que hayas tomado) y generá la propuesta en el formato de siempre.</p>
+
+      <div class="form-row two">
+        <div>
+          <label for="clienteInput">Cliente / proyecto</label>
+          <input type="text" id="clienteInput" list="proyectosList" placeholder="Nombre del cliente">
+          <datalist id="proyectosList"></datalist>
+        </div>
+        <div>
+          <label for="temaSelect">Tema relevado</label>
+          <select id="temaSelect"><option value="">— elegí un tema —</option></select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="notasInput">Notas de la reunión</label>
+        <textarea id="notasInput" rows="9" placeholder="Pegá acá las notas o la transcripción que te dio Gemini..."></textarea>
+      </div>
+
+      <div class="generar-btn-row">
+        <button class="primary" id="generarBtn">Generar propuesta</button>
+        <span class="thinking" id="thinkingMsg" hidden>Pensando… puede tardar un momento.</span>
+      </div>
+
+      <div id="outputWrap"><div class="placeholder">Todavía no generaste ninguna propuesta para esta reunión.</div></div>
+
+      <div class="historial" id="historialWrap" hidden>
+        <h2>Propuestas anteriores</h2>
+        <div id="historialList"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="view" id="viewProyectos" style="max-width:1160px;margin:0 auto;padding:2rem 1.75rem 4rem;">
+    <h2 style="font-family:var(--serif);font-weight:600;font-size:1.2rem;margin:0 0 0.2rem;">Proyectos</h2>
+    <p class="hint" style="color:var(--ink-soft);font-size:0.88rem;margin:0 0 1.1rem;">Clientes de Cartera Viva con las propuestas que les generaste, ordenados por actividad más reciente.</p>
+    <input type="text" id="buscarProyectoInput" placeholder="Buscar por nombre..." style="width:100%;margin-bottom:1.1rem;">
+    <div id="metricasWrap"></div>
+    <div id="seguimientoWrap"></div>
+    <div class="proyectos-list" id="proyectosList2"></div>
+  </div>
+
+  <div class="view" id="viewConocimiento" style="max-width:1160px;margin:0 auto;padding:2rem 1.75rem 4rem;">
+    <h2 style="font-family:var(--serif);font-weight:600;font-size:1.2rem;margin:0 0 0.2rem;">Conocimiento acumulado</h2>
+    <p class="hint" style="color:var(--ink-soft);font-size:0.88rem;margin:0 0 1.25rem;">Casos, benchmarks o aprendizajes por tema — se usan como contexto extra cada vez que generás una propuesta de ese tema.</p>
+
+    <div class="temas-list" id="conocimientoTemasList"></div>
+
+    <div class="preguntas-panel" style="margin-bottom:1.6rem;">
+      <div class="titulo-tema">Agregar entrada</div>
+      <div class="form-row">
+        <label for="conoTemaSelect">Tema</label>
+        <select id="conoTemaSelect"><option value="">— sin tema específico —</option></select>
+      </div>
+      <div class="form-row">
+        <label for="conoTitulo">Título</label>
+        <input type="text" id="conoTitulo" placeholder="Ej. Benchmark de tiempo de facturación en metalúrgicas chicas">
+      </div>
+      <div class="form-row">
+        <label for="conoContenido">Contenido</label>
+        <textarea id="conoContenido" rows="5" placeholder="Pegá acá el caso, el dato o lo que quieras que quede guardado..."></textarea>
+      </div>
+      <div class="form-row">
+        <label for="conoArchivo">O subí un archivo (PDF o Word .docx) para que se extraiga el texto acá arriba</label>
+        <input type="file" id="conoArchivo" accept=".pdf,.docx">
+        <div class="empty-note" id="conoArchivoEstado" style="padding-top:0.4rem;"></div>
+      </div>
+      <div class="form-row">
+        <label for="conoFuente">Fuente (opcional)</label>
+        <input type="text" id="conoFuente" placeholder="Ej. reunión con Metalúrgica Andina, investigación web, un link...">
+      </div>
+      <button class="primary" id="conoGuardarBtn">Guardar</button>
+    </div>
+
+    <div id="conocimientoList"></div>
+  </div>
+
+  <div class="view" id="viewAjustes" style="max-width:720px;margin:0 auto;padding:2rem 1.75rem 4rem;">
+    <h2 style="font-family:var(--serif);font-weight:600;font-size:1.2rem;margin:0 0 0.2rem;">Ajustes</h2>
+    <p class="hint" style="color:var(--ink-soft);font-size:0.88rem;margin:0 0 1.25rem;">Tu marca, para que aparezca en las propuestas que le mandás al cliente y en los PDF. Y tu tarifa por hora, para la calculadora de inversión.</p>
+    <div class="preguntas-panel">
+      <div class="form-row">
+        <label for="ajNombreNegocio">Nombre del negocio / consultora</label>
+        <input type="text" id="ajNombreNegocio" placeholder="Ej. Ramiro Sabater — Consultoría IA">
+      </div>
+      <div class="form-row">
+        <label for="ajLogo">Logo (opcional)</label>
+        <input type="file" id="ajLogo" accept="image/*">
+        <div style="margin-top:0.6rem;"><img id="ajLogoPreview" src="" alt="" style="max-height:48px;display:none;"></div>
+      </div>
+      <div class="form-row">
+        <label for="ajTarifa">Tu tarifa por hora (para la calculadora de inversión)</label>
+        <input type="text" id="ajTarifa" inputmode="numeric" placeholder="Ej. 45000">
+      </div>
+      <button class="primary" id="ajGuardarBtn">Guardar ajustes</button>
+      <span class="gantt-saved" id="ajGuardadoMsg" style="margin-left:0.6rem;"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let temas = [];
+  let temaActivoId = null;
+  let ultimaPropuestaTexto = '';
+  let proyectosCache = []; // [{id, nombre}] de Cartera Viva, para linkear
+
+  const loginScreen = document.getElementById('loginScreen');
+  const loginForm = document.getElementById('loginForm');
+  const loginError = document.getElementById('loginError');
+  const appEl = document.getElementById('app');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  const temasList = document.getElementById('temasList');
+  const nuevoTemaInput = document.getElementById('nuevoTemaInput');
+  const nuevoTemaBtn = document.getElementById('nuevoTemaBtn');
+  const preguntasPanel = document.getElementById('preguntasPanel');
+  const temaSelect = document.getElementById('temaSelect');
+  const clienteInput = document.getElementById('clienteInput');
+  const proyectosList = document.getElementById('proyectosList');
+  const notasInput = document.getElementById('notasInput');
+  const generarBtn = document.getElementById('generarBtn');
+  const thinkingMsg = document.getElementById('thinkingMsg');
+  const outputWrap = document.getElementById('outputWrap');
+  const historialWrap = document.getElementById('historialWrap');
+  const historialList = document.getElementById('historialList');
+
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+  function slugify(s) {
+    return s.toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 60) || ('tema-' + Date.now());
+  }
+
+  // ========== LOGIN ==========
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.textContent = '';
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { loginError.textContent = 'No se pudo entrar — revisá usuario y contraseña.'; return; }
+    mostrarApp();
+  });
+
+  logoutBtn.addEventListener('click', async () => {
+    await sb.auth.signOut();
+    location.reload();
+  });
+
+  async function mostrarApp() {
+    loginScreen.hidden = true;
+    appEl.hidden = false;
+    await cargarTemas();
+    await cargarProyectos();
+    await cargarHistorial();
+    await cargarConfiguracion();
+  }
+
+  (async function boot() {
+    const { data } = await sb.auth.getSession();
+    if (data.session) mostrarApp();
+  })();
+
+  // ========== BANCO DE PREGUNTAS ==========
+  async function cargarTemas() {
+    const { data, error } = await sb.from('temas').select('id, nombre, slug, preguntas(id, texto, orden)').order('nombre');
+    if (error) { preguntasPanel.innerHTML = '<div class="empty-note">No se pudo cargar el banco de preguntas.</div>'; return; }
+    temas = (data || []).map(t => ({ ...t, preguntas: (t.preguntas || []).sort((a, b) => a.orden - b.orden) }));
+    if (!temaActivoId && temas.length) temaActivoId = temas[0].id;
+    renderTemasList();
+    renderPreguntasPanel();
+  }
+
+  function renderTemasList() {
+    temasList.innerHTML = '';
+    temas.forEach(t => {
+      const chip = document.createElement('button');
+      chip.className = 'tema-chip' + (t.id === temaActivoId ? ' active' : '');
+      chip.textContent = t.nombre;
+      chip.onclick = () => { temaActivoId = t.id; renderTemasList(); renderPreguntasPanel(); };
+      temasList.appendChild(chip);
+    });
+    const prev = temaSelect.value;
+    temaSelect.innerHTML = '<option value="">— elegí un tema —</option>';
+    temas.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id; opt.textContent = t.nombre;
+      temaSelect.appendChild(opt);
+    });
+    if (temas.some(t => t.id === prev)) temaSelect.value = prev;
+    else if (temaActivoId) temaSelect.value = temaActivoId;
+  }
+
+  function renderPreguntasPanel() {
+    const tema = temas.find(t => t.id === temaActivoId);
+    if (!tema) { preguntasPanel.innerHTML = '<div class="empty-note">Elegí o creá un tema para ver sus preguntas.</div>'; return; }
+    const preguntas = tema.preguntas || [];
+    preguntasPanel.innerHTML = `
+      <div class="titulo-tema">${escapeHtml(tema.nombre)}</div>
+      <ul class="preguntas">
+        ${preguntas.length ? preguntas.map(p => `
+          <li>
+            <span class="box"></span>
+            <span class="texto">${escapeHtml(p.texto)}</span>
+            <button class="del" data-pid="${p.id}" title="Borrar">✕</button>
+          </li>`).join('') : '<div class="empty-note">Sin preguntas todavía — agregá la primera abajo.</div>'}
+      </ul>
+      <div class="pregunta-add">
+        <input type="text" id="nuevaPreguntaInput" placeholder="Agregar una pregunta...">
+        <button id="nuevaPreguntaBtn">Agregar</button>
+      </div>`;
+    preguntasPanel.querySelectorAll('button.del').forEach(btn => {
+      btn.onclick = () => borrarPregunta(btn.dataset.pid);
+    });
+    const addInput = document.getElementById('nuevaPreguntaInput');
+    const addBtn = document.getElementById('nuevaPreguntaBtn');
+    const addFn = () => { const texto = addInput.value.trim(); if (texto) { agregarPregunta(tema.id, texto); addInput.value = ''; } };
+    addBtn.onclick = addFn;
+    addInput.addEventListener('keydown', e => { if (e.key === 'Enter') addFn(); });
+  }
+
+  async function crearTema(nombre) {
+    const slug = slugify(nombre);
+    const { data, error } = await sb.from('temas').insert({ nombre, slug }).select().single();
+    if (error) { alert('No se pudo crear el tema (¿ya existe uno con ese nombre?).'); return; }
+    temaActivoId = data.id;
+    await cargarTemas();
+  }
+  async function agregarPregunta(temaId, texto) {
+    const tema = temas.find(t => t.id === temaId);
+    const orden = (tema.preguntas || []).length + 1;
+    await sb.from('preguntas').insert({ tema_id: temaId, texto, orden });
+    await cargarTemas();
+  }
+  async function borrarPregunta(preguntaId) {
+    await sb.from('preguntas').delete().eq('id', preguntaId);
+    await cargarTemas();
+  }
+
+  nuevoTemaBtn.onclick = () => { const n = nuevoTemaInput.value.trim(); if (n) { crearTema(n); nuevoTemaInput.value = ''; } };
+  nuevoTemaInput.addEventListener('keydown', e => { if (e.key === 'Enter') nuevoTemaBtn.onclick(); });
+
+  // ========== PROYECTOS DE CARTERA VIVA (para linkear el cliente) ==========
+  async function cargarProyectos() {
+    const { data, error } = await sb.from('proyectos').select('id, nombre, clientes(nombre)');
+    if (error) return; // si la tabla no existe o no hay acceso, seguimos sin autosuggest
+    proyectosCache = (data || []).map(p => ({ id: p.id, nombre: (p.clientes && p.clientes.nombre) || p.nombre }));
+    proyectosList.innerHTML = proyectosCache.map(p => `<option value="${escapeHtml(p.nombre)}">`).join('');
+  }
+  function proyectoIdPorNombre(nombre) {
+    const hit = proyectosCache.find(p => p.nombre.toLowerCase() === nombre.trim().toLowerCase());
+    return hit ? hit.id : null;
+  }
+
+  // ========== GENERADOR DE PROPUESTA (JSON estructurado) ==========
+  let propuestaActual = null; // { id, dolor, solucion, gantt: [...], inversion, costo_inaccion, criterios_exito, proximo_paso }
+
+  const PALETA = ['#2F6F5E', '#A6672B', '#5B6FA6', '#A64B5B', '#6E8C3E', '#8A5FA6', '#3E8C8C'];
+  function colorResponsable(nombre) {
+    const n = (nombre || 'Sin asignar').trim() || 'Sin asignar';
+    let hash = 0;
+    for (let i = 0; i < n.length; i++) hash = (hash * 31 + n.charCodeAt(i)) >>> 0;
+    return PALETA[hash % PALETA.length];
+  }
+
+  function promptPropuesta(cliente, temaNombre, preguntasTema, notas, conocimiento) {
+    const lista = (preguntasTema || []).map(p => '- ' + p.texto).join('\n') || '(sin preguntas cargadas para este tema)';
+    const conocimientoTxt = (conocimiento && conocimiento.length)
+      ? conocimiento.map(c => `- ${c.titulo}${c.fuente ? ' (' + c.fuente + ')' : ''}: ${c.contenido}`).join('\n')
+      : '(sin conocimiento acumulado todavía para este tema)';
+    return `Sos consultor senior de un proyecto de diagnóstico de IA para una pyme. Te paso las notas de una reunión de relevamiento y armá la propuesta comercial en el formato fijo de 7 secciones, corta y fácil de leer, sin detalle técnico ni anexos legales. Español rioplatense.
+
+Cliente: ${cliente || '(no indicado)'}
+Tema relevado: ${temaNombre || '(no indicado)'}
+
+Preguntas que se buscaba cubrir en esta reunión (referencia, no todas tienen por qué tener respuesta en las notas):
+${lista}
+
+Conocimiento acumulado de casos anteriores en este tema (usalo como referencia para calibrar estimaciones y sugerir soluciones probadas — no lo repitas textual, y no lo apliques si no es realmente relevante a este caso puntual):
+${conocimientoTxt}
+
+Notas de la reunión:
+${notas}
+
+Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fences de markdown) con esta forma exacta:
+
+{
+  "dolor": "string — el dolor en una línea",
+  "solucion": "string — la solución propuesta, un párrafo corto",
+  "gantt": [
+    {"tarea": "string — nombre de la etapa", "semana_inicio": number, "semana_fin": number, "responsable": "string — a quién le corresponde (rol o nombre; 'Consultor' o 'Cliente' si no hay nombre propio)"}
+  ],
+  "inversion": "string — si no se relevó un número, escribí 'a definir', nunca lo inventes",
+  "costo_inaccion": "string — un párrafo corto",
+  "criterios_exito": "string — lista en texto plano, separada por saltos de línea con '- ' al inicio de cada uno",
+  "proximo_paso": "string — un paso concreto"
+}
+
+El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como números enteros (semana 1, 2, 3...), y cada etapa con un responsable asignado (no lo dejes vacío).`;
+  }
+
+  async function generarPropuesta() {
+    const cliente = clienteInput.value.trim();
+    const temaId = temaSelect.value;
+    const tema = temas.find(t => t.id === temaId);
+    const notas = notasInput.value.trim();
+    if (!notas) { notasInput.focus(); return; }
+
+    generarBtn.disabled = true; thinkingMsg.hidden = false; outputWrap.innerHTML = '';
+
+    try {
+      const { data: sessionData } = await sb.auth.getSession();
+      const token = sessionData.session && sessionData.session.access_token;
+      const conocimiento = await conocimientoParaTema(temaId);
+      const prompt = promptPropuesta(cliente, tema ? tema.nombre : '', tema ? tema.preguntas : [], notas, conocimiento);
+
+      const resp = await fetch('/.netlify/functions/generar-propuesta', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + token },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'error');
+
+      const parsed = parsearJsonTolerante(data.text);
+      if (!parsed) throw new Error('invalid_json');
+
+      const { data: inserted, error: insErr } = await sb.from('propuestas').insert({
+        proyecto_id: proyectoIdPorNombre(cliente),
+        cliente_texto: cliente || null,
+        tema_id: temaId || null,
+        notas,
+        contenido: JSON.stringify(parsed),
+        gantt: parsed.gantt || [],
+      }).select().single();
+      if (insErr) throw insErr;
+
+      propuestaActual = { id: inserted.id, estado: inserted.estado, ...parsed };
+      mostrarPropuesta(propuestaActual);
+      await cargarHistorial();
+    } catch (e) {
+      outputWrap.innerHTML = `<div class="placeholder">No se pudo generar la propuesta. Probá de nuevo en un momento.</div>`;
+    } finally {
+      generarBtn.disabled = false; thinkingMsg.hidden = true;
+    }
+  }
+
+  function parsearJsonTolerante(text) {
+    try { return JSON.parse(text); } catch {}
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch {} }
+    return null;
+  }
+
+  function mostrarPropuesta(p) {
+    propuestaActual = p;
+    outputWrap.innerHTML = '';
+    renderPropuestaVista(p, false);
+  }
+
+  function renderPropuestaVista(p, editando) {
+    const criterios = (p.criterios_exito || '').split('\n').map(l => l.replace(/^[-*]\s*/, '').trim()).filter(Boolean);
+    const badgeEstado = p.estado === 'aceptada' ? '<span class="tag-warm" style="color:var(--accent);border-color:var(--accent);">✓ Aceptada</span>' : '';
+
+    if (!editando) {
+      outputWrap.innerHTML = `
+        <div class="propuesta-output">
+          <div style="display:flex;justify-content:flex-end;">${badgeEstado}</div>
+          <h3>Dolor en una línea</h3><p>${escapeHtml(p.dolor || '')}</p>
+          <h3>Solución propuesta</h3><p>${escapeHtml(p.solucion || '')}</p>
+          <h3>Gantt estimado</h3>
+          <div id="ganttWrap"></div>
+          <h3>Inversión</h3><p>${escapeHtml(p.inversion || '')}</p>
+          <h3>Costo de la inacción</h3><p>${escapeHtml(p.costo_inaccion || '')}</p>
+          <h3>Criterios de éxito</h3><ul>${criterios.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>
+          <h3>Próximo paso concreto</h3><p>${escapeHtml(p.proximo_paso || '')}</p>
+        </div>
+        <div class="propuesta-actions">
+          <button id="editarTextoBtn">Editar texto</button>
+          <button id="copiarBtn">Copiar como texto</button>
+          <button id="compartirBtn">Compartir con el cliente</button>
+        </div>
+        <div id="compartirPanel"></div>`;
+      renderGantt(p.gantt || [], document.getElementById('ganttWrap'), p.id);
+      document.getElementById('editarTextoBtn').onclick = () => renderPropuestaVista(p, true);
+      document.getElementById('copiarBtn').onclick = () => {
+        const texto = `DOLOR: ${p.dolor}\n\nSOLUCIÓN: ${p.solucion}\n\nGANTT:\n${(p.gantt||[]).map(g=>`- ${g.tarea} (semana ${g.semana_inicio}-${g.semana_fin}, responsable: ${g.responsable})`).join('\n')}\n\nINVERSIÓN: ${p.inversion}\n\nCOSTO DE LA INACCIÓN: ${p.costo_inaccion}\n\nCRITERIOS DE ÉXITO:\n${p.criterios_exito}\n\nPRÓXIMO PASO: ${p.proximo_paso}`;
+        navigator.clipboard.writeText(texto).catch(() => {});
+      };
+      document.getElementById('compartirBtn').onclick = () => abrirPanelCompartir(p);
+      return;
+    }
+
+    // ---- modo edición ----
+    const tarifaDefault = configuracionCache.tarifa_hora || '';
+    outputWrap.innerHTML = `
+      <div class="propuesta-output">
+        <h3>Dolor en una línea</h3><textarea rows="2" id="edDolor">${escapeHtml(p.dolor || '')}</textarea>
+        <h3>Solución propuesta</h3><textarea rows="3" id="edSolucion">${escapeHtml(p.solucion || '')}</textarea>
+        <h3>Gantt estimado</h3>
+        <div id="ganttWrap"></div>
+        <h3>Inversión</h3>
+        <div style="display:flex;gap:1rem;margin-bottom:0.5rem;font-size:0.85rem;">
+          <label><input type="radio" name="edModoInv" value="texto" checked> Texto libre</label>
+          <label><input type="radio" name="edModoInv" value="fijo"> Monto fijo</label>
+          <label><input type="radio" name="edModoInv" value="horas"> Por horas</label>
+        </div>
+        <div id="edInvCalc" style="display:none;margin-bottom:0.6rem;">
+          <div class="form-row two">
+            <div id="edInvFijoWrap" style="display:none;"><label>Monto (ARS)</label><input type="text" inputmode="numeric" id="edInvMonto" placeholder="Ej. 850000"></div>
+            <div id="edInvHorasWrap" style="display:none;"><label>Horas estimadas</label><input type="text" inputmode="numeric" id="edInvHoras" placeholder="Ej. 20"></div>
+            <div id="edInvTarifaWrap" style="display:none;"><label>Tarifa por hora (ARS)</label><input type="text" inputmode="numeric" id="edInvTarifa" value="${escapeHtml(String(tarifaDefault))}"></div>
+          </div>
+        </div>
+        <textarea rows="2" id="edInversion">${escapeHtml(p.inversion || '')}</textarea>
+        <h3>Costo de la inacción</h3><textarea rows="3" id="edCostoInaccion">${escapeHtml(p.costo_inaccion || '')}</textarea>
+        <h3>Criterios de éxito</h3>
+        <p class="hint" style="margin:0 0 0.3rem;">Uno por línea.</p>
+        <textarea rows="4" id="edCriterios">${escapeHtml(criterios.join('\n'))}</textarea>
+        <h3>Próximo paso concreto</h3><textarea rows="2" id="edProximoPaso">${escapeHtml(p.proximo_paso || '')}</textarea>
+      </div>
+      <div class="propuesta-actions">
+        <button class="primary" id="guardarTextoBtn">Guardar cambios</button>
+        <button id="cancelarEdicionBtn">Cancelar</button>
+      </div>`;
+    renderGantt(p.gantt || [], document.getElementById('ganttWrap'), p.id);
+
+    const radios = outputWrap.querySelectorAll('input[name="edModoInv"]');
+    const calcWrap = document.getElementById('edInvCalc');
+    const fijoWrap = document.getElementById('edInvFijoWrap');
+    const horasWrap = document.getElementById('edInvHorasWrap');
+    const tarifaWrap = document.getElementById('edInvTarifaWrap');
+    const edInversion = document.getElementById('edInversion');
+
+    function actualizarCalculo() {
+      const modo = outputWrap.querySelector('input[name="edModoInv"]:checked').value;
+      calcWrap.style.display = modo === 'texto' ? 'none' : '';
+      fijoWrap.style.display = modo === 'fijo' ? '' : 'none';
+      horasWrap.style.display = modo === 'horas' ? '' : 'none';
+      tarifaWrap.style.display = modo === 'horas' ? '' : 'none';
+      if (modo === 'fijo') {
+        const monto = document.getElementById('edInvMonto').value.trim();
+        if (monto) edInversion.value = `$${Number(monto.replace(/\D/g,'')).toLocaleString('es-AR')} (monto cerrado)`;
+      } else if (modo === 'horas') {
+        const horas = parseFloat(document.getElementById('edInvHoras').value) || 0;
+        const tarifa = parseFloat(document.getElementById('edInvTarifa').value) || 0;
+        if (horas && tarifa) edInversion.value = `${horas} horas estimadas × $${tarifa.toLocaleString('es-AR')}/hora = $${(horas*tarifa).toLocaleString('es-AR')}`;
+      }
+    }
+    radios.forEach(r => r.onchange = actualizarCalculo);
+    ['edInvMonto', 'edInvHoras', 'edInvTarifa'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', actualizarCalculo);
+    });
+
+    document.getElementById('cancelarEdicionBtn').onclick = () => renderPropuestaVista(p, false);
+    document.getElementById('guardarTextoBtn').onclick = async () => {
+      const actualizado = {
+        ...p,
+        dolor: document.getElementById('edDolor').value.trim(),
+        solucion: document.getElementById('edSolucion').value.trim(),
+        inversion: edInversion.value.trim(),
+        costo_inaccion: document.getElementById('edCostoInaccion').value.trim(),
+        criterios_exito: document.getElementById('edCriterios').value.trim().split('\n').map(l => l.trim()).filter(Boolean).map(l => '- ' + l).join('\n'),
+        proximo_paso: document.getElementById('edProximoPaso').value.trim(),
+      };
+      if (p.id) {
+        const { id, gantt, ...contenido } = actualizado;
+        await sb.from('propuestas').update({ contenido: JSON.stringify(contenido) }).eq('id', p.id);
+      }
+      propuestaActual = actualizado;
+      renderPropuestaVista(actualizado, false);
+      await cargarHistorial();
+    };
+  }
+
+  async function abrirPanelCompartir(p) {
+    const panel = document.getElementById('compartirPanel');
+    if (!p.id) { panel.innerHTML = '<div class="empty-note">Guardá la propuesta primero (generala de nuevo si hace falta).</div>'; return; }
+    panel.innerHTML = '<div class="empty-note">Generando link…</div>';
+    const { data, error } = await sb.from('shares').insert({ propuesta_id: p.id }).select().single();
+    if (error) { panel.innerHTML = '<div class="empty-note">No se pudo generar el link.</div>'; return; }
+    const link = location.origin + '/ver.html?token=' + data.id;
+    panel.innerHTML = `
+      <div class="preguntas-panel" style="margin-top:0.8rem;">
+        <div class="titulo-tema">Link para el cliente</div>
+        <div class="pregunta-add" style="margin-bottom:0.8rem;">
+          <input type="text" id="linkCompartido" value="${escapeHtml(link)}" readonly>
+          <button id="copiarLinkBtn">Copiar link</button>
+        </div>
+        <div class="form-row">
+          <label for="mailClienteInput">Mail del cliente (opcional, para armar el envío)</label>
+          <input type="text" id="mailClienteInput" placeholder="cliente@empresa.com">
+        </div>
+        <button class="primary" id="enviarMailBtn">Abrir borrador de mail</button>
+      </div>`;
+    document.getElementById('copiarLinkBtn').onclick = () => navigator.clipboard.writeText(link).catch(() => {});
+    document.getElementById('enviarMailBtn').onclick = () => {
+      const mail = document.getElementById('mailClienteInput').value.trim();
+      const asunto = encodeURIComponent(`Propuesta — ${p.cliente_texto || clienteInput.value || ''}`);
+      const cuerpo = encodeURIComponent(`Hola,\n\nTe comparto la propuesta:\n${link}\n\nSaludos.`);
+      window.location.href = `mailto:${mail}?subject=${asunto}&body=${cuerpo}`;
+    };
+  }
+
+  // ---------- Gantt: dibujo + tabla editable ----------
+  function renderGantt(tareas, container, propuestaId) {
+    if (!tareas.length) { container.innerHTML = '<div class="empty-note">Sin etapas.</div>'; return; }
+    const maxSemana = Math.max(1, ...tareas.map(t => t.semana_fin || t.semana_inicio || 1));
+
+    function dibujarChart() {
+      const responsablesUnicos = [...new Set(tareas.map(t => t.responsable || 'Sin asignar'))];
+      let html = `<div class="gantt-wrap"><div class="gantt-chart">`;
+      html += `<div class="gantt-scale"><div></div><div class="ticks">${Array.from({length: maxSemana}, (_, i) => `<span>S${i+1}</span>`).join('')}</div></div>`;
+      tareas.forEach(t => {
+        const ini = Math.max(1, t.semana_inicio || 1), fin = Math.max(ini, t.semana_fin || ini);
+        const left = ((ini - 1) / maxSemana) * 100, width = ((fin - ini + 1) / maxSemana) * 100;
+        html += `<div class="gantt-row"><div class="label" title="${escapeHtml(t.tarea)}">${escapeHtml(t.tarea)}</div>
+          <div class="gantt-track"><div class="gantt-bar" style="left:${left}%;width:${width}%;background:${colorResponsable(t.responsable)};" title="${escapeHtml(t.responsable||'')}">${escapeHtml(t.responsable||'')}</div></div></div>`;
+      });
+      html += `<div class="gantt-legend">${responsablesUnicos.map(r => `<span class="item"><span class="dot" style="background:${colorResponsable(r)}"></span>${escapeHtml(r)}</span>`).join('')}</div>`;
+      html += `</div></div>`;
+      return html;
+    }
+
+    function dibujarTabla() {
+      let html = `<table class="gantt-edit"><thead><tr><th>Etapa</th><th>Semana inicio</th><th>Semana fin</th><th>Responsable</th><th></th></tr></thead><tbody>`;
+      tareas.forEach((t, i) => {
+        html += `<tr data-i="${i}">
+          <td><input type="text" class="f-tarea" value="${escapeHtml(t.tarea || '')}"></td>
+          <td><input type="text" inputmode="numeric" class="f-ini semana" value="${t.semana_inicio ?? 1}"></td>
+          <td><input type="text" inputmode="numeric" class="f-fin semana" value="${t.semana_fin ?? 1}"></td>
+          <td><input type="text" class="f-resp" value="${escapeHtml(t.responsable || '')}"></td>
+          <td><button class="del-row" title="Borrar etapa">✕</button></td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      return html;
+    }
+
+    function render() {
+      container.innerHTML = dibujarChart() + dibujarTabla() +
+        `<div class="gantt-actions"><button id="ganttAddRow">+ Agregar etapa</button><button class="primary" id="ganttGuardar">Guardar cambios</button><span class="gantt-saved" id="ganttSavedMsg"></span></div>`;
+
+      container.querySelectorAll('tbody tr').forEach(tr => {
+        const i = +tr.dataset.i;
+        tr.querySelector('.f-tarea').oninput = e => { tareas[i].tarea = e.target.value; refrescarSoloChart(); };
+        tr.querySelector('.f-ini').oninput = e => { tareas[i].semana_inicio = parseInt(e.target.value) || 1; refrescarSoloChart(); };
+        tr.querySelector('.f-fin').oninput = e => { tareas[i].semana_fin = parseInt(e.target.value) || tareas[i].semana_inicio; refrescarSoloChart(); };
+        tr.querySelector('.f-resp').oninput = e => { tareas[i].responsable = e.target.value; refrescarSoloChart(); };
+        tr.querySelector('.del-row').onclick = () => { tareas.splice(i, 1); render(); };
+      });
+      document.getElementById('ganttAddRow').onclick = () => { tareas.push({ tarea: 'Nueva etapa', semana_inicio: 1, semana_fin: 1, responsable: '' }); render(); };
+      document.getElementById('ganttGuardar').onclick = async () => {
+        if (propuestaId) {
+          await sb.from('propuestas').update({ gantt: tareas }).eq('id', propuestaId);
+          if (propuestaActual) propuestaActual.gantt = tareas;
+        }
+        const msg = document.getElementById('ganttSavedMsg');
+        msg.textContent = 'Guardado ✓';
+        setTimeout(() => { if (msg) msg.textContent = ''; }, 2500);
+      };
+    }
+
+    function refrescarSoloChart() {
+      const chartDiv = container.querySelector('.gantt-wrap');
+      if (chartDiv) chartDiv.outerHTML = dibujarChart();
+    }
+
+    render();
+  }
+
+  async function cargarHistorial() {
+    const { data, error } = await sb.from('propuestas').select('*').order('creado_at', { ascending: false }).limit(20);
+    if (error || !data || !data.length) { historialWrap.hidden = true; return; }
+    historialWrap.hidden = false;
+    historialList.innerHTML = '';
+    data.forEach(row => {
+      const item = document.createElement('div');
+      item.className = 'historial-item';
+      const temaNombre = (temas.find(t => t.id === row.tema_id) || {}).nombre;
+      const fecha = row.creado_at ? new Date(row.creado_at).toLocaleDateString('es-AR') : '';
+      item.innerHTML = `<span class="cliente">${escapeHtml(row.cliente_texto || '(sin cliente)')}${temaNombre ? `<span class="tag-warm">${escapeHtml(temaNombre)}</span>` : ''}${row.estado === 'aceptada' ? '<span class="tag-warm" style="color:var(--accent);border-color:var(--accent);">✓</span>' : ''}</span><span class="fecha">${fecha}</span>`;
+      item.onclick = () => {
+        const contenido = typeof row.contenido === 'string' ? parsearJsonTolerante(row.contenido) : row.contenido;
+        if (!contenido) return;
+        mostrarPropuesta({ id: row.id, estado: row.estado, ...contenido, gantt: row.gantt || contenido.gantt || [] });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+      historialList.appendChild(item);
+    });
+  }
+
+  // ========== ARCHIVOS ADJUNTOS (Supabase Storage) ==========
+  function prefijoStorage(f) {
+    return (f.id || '').toString().replace(/[^a-zA-Z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'sin-id';
+  }
+
+  async function cargarArchivosProyecto(f, contenedor) {
+    const prefijo = prefijoStorage(f);
+    const { data, error } = await sb.storage.from('adjuntos-proyecto').list(prefijo, { sortBy: { column: 'created_at', order: 'desc' } });
+    if (error) { contenedor.innerHTML = '<div class="empty-note">No se pudo cargar (¿falta correr la migración de archivos?).</div>'; return; }
+    if (!data || !data.length) { contenedor.innerHTML = '<div class="empty-note">Sin archivos todavía.</div>'; return; }
+    contenedor.innerHTML = data.map(file => `
+      <div class="archivo-item" data-name="${escapeHtml(file.name)}">
+        <span>${escapeHtml(file.name.replace(/^\d+-/, ''))}</span>
+        <span><a href="#" class="ver-archivo">Ver</a> · <a href="#" class="borrar-archivo">Borrar</a></span>
+      </div>`).join('');
+    contenedor.querySelectorAll('.ver-archivo').forEach(a => {
+      a.onclick = async (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        const name = a.closest('.archivo-item').dataset.name;
+        const { data: signed } = await sb.storage.from('adjuntos-proyecto').createSignedUrl(`${prefijo}/${name}`, 3600);
+        if (signed) window.open(signed.signedUrl, '_blank');
+      };
+    });
+    contenedor.querySelectorAll('.borrar-archivo').forEach(a => {
+      a.onclick = async (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        const name = a.closest('.archivo-item').dataset.name;
+        if (!confirm('¿Borrar este archivo?')) return;
+        await sb.storage.from('adjuntos-proyecto').remove([`${prefijo}/${name}`]);
+        cargarArchivosProyecto(f, contenedor);
+      };
+    });
+  }
+
+  async function subirArchivoProyecto(f, slot) {
+    const input = slot.querySelector('#archivoInput');
+    const file = input.files[0];
+    if (!file) return;
+    const prefijo = prefijoStorage(f);
+    const path = `${prefijo}/${Date.now()}-${file.name}`;
+    const { error } = await sb.storage.from('adjuntos-proyecto').upload(path, file);
+    if (error) { alert('No se pudo subir el archivo.'); return; }
+    input.value = '';
+    cargarArchivosProyecto(f, slot.querySelector('#archivosList'));
+  }
+
+  // ========== DESCARGAR PDF DE UN PROYECTO (via impresión del navegador) ==========
+  function seccionPropuestaHTML(contenido, gantt) {
+    const criterios = (contenido.criterios_exito || '').split('\n').map(l => l.replace(/^[-*]\s*/, '').trim()).filter(Boolean);
+    return `
+      <h4>Dolor en una línea</h4><p>${escapeHtml(contenido.dolor || '')}</p>
+      <h4>Solución propuesta</h4><p>${escapeHtml(contenido.solucion || '')}</p>
+      <h4>Cronograma estimado</h4>
+      ${renderGanttEstaticoHTML(gantt || contenido.gantt || [])}
+      <h4>Inversión</h4><p>${escapeHtml(contenido.inversion || '')}</p>
+      <h4>Costo de la inacción</h4><p>${escapeHtml(contenido.costo_inaccion || '')}</p>
+      <h4>Criterios de éxito</h4><ul>${criterios.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>
+      <h4>Próximo paso concreto</h4><p>${escapeHtml(contenido.proximo_paso || '')}</p>`;
+  }
+
+  function renderGanttEstaticoHTML(tareas) {
+    if (!tareas || !tareas.length) return '<p style="color:#5B6660;font-style:italic;">Sin etapas cargadas.</p>';
+    const maxSemana = Math.max(1, ...tareas.map(t => t.semana_fin || t.semana_inicio || 1));
+    const responsablesUnicos = [...new Set(tareas.map(t => t.responsable || 'Sin asignar'))];
+    let html = `<div style="border:1px solid #C7CDBE;border-radius:3px;padding:0.8rem 1rem;margin:0.4rem 0 1rem;">`;
+    tareas.forEach(t => {
+      const ini = Math.max(1, t.semana_inicio || 1), fin = Math.max(ini, t.semana_fin || ini);
+      const left = ((ini - 1) / maxSemana) * 100, width = ((fin - ini + 1) / maxSemana) * 100;
+      html += `<div style="display:grid;grid-template-columns:140px 1fr;gap:0.5rem;align-items:center;padding:0.2rem 0;">
+        <div style="font-size:0.78rem;">${escapeHtml(t.tarea)}</div>
+        <div style="position:relative;height:1.1rem;background:#EEF0EA;border-radius:2px;">
+          <div style="position:absolute;top:0;bottom:0;left:${left}%;width:${width}%;background:${colorResponsable(t.responsable)};border-radius:2px;font-size:0.65rem;color:#fff;display:flex;align-items:center;padding:0 0.3rem;overflow:hidden;white-space:nowrap;">${escapeHtml(t.responsable||'')}</div>
+        </div></div>`;
+    });
+    html += `<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.6rem;">${responsablesUnicos.map(r => `<span style="font-size:0.72rem;color:#5B6660;"><span style="display:inline-block;width:0.5rem;height:0.5rem;border-radius:50%;background:${colorResponsable(r)};margin-right:0.3rem;"></span>${escapeHtml(r)}</span>`).join('')}</div>`;
+    html += `</div>`;
+    return html;
+  }
+
+  function descargarPdfProyecto(f) {
+    if (!f.propuestas.length) { alert('Este proyecto todavía no tiene propuestas generadas.'); return; }
+    const bloques = f.propuestas.map(p => {
+      const contenido = typeof p.contenido === 'string' ? parsearJsonTolerante(p.contenido) : p.contenido;
+      if (!contenido) return '';
+      const fecha = p.creado_at ? new Date(p.creado_at).toLocaleDateString('es-AR') : '';
+      const temaNombre = (temas.find(t => t.id === p.tema_id) || {}).nombre;
+      return `
+        <section style="page-break-inside:avoid;border:1px solid #C7CDBE;border-radius:3px;padding:1.2rem 1.4rem;margin-bottom:1.4rem;">
+          <div style="font-size:0.8rem;color:#5B6660;margin-bottom:0.3rem;">${fecha}${temaNombre ? ' · ' + escapeHtml(temaNombre) : ''}</div>
+          ${seccionPropuestaHTML(contenido, p.gantt)}
+        </section>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+      <title>${escapeHtml(f.nombre)} — Cuaderno de relevamiento</title>
+      <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+      <style>
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+        body { font-family:'IBM Plex Sans',-apple-system,sans-serif; color:#1B2420; padding:2rem 2.4rem; }
+        h1 { font-family:'Source Serif 4',serif; font-weight:700; font-size:1.6rem; margin:0 0 0.2rem; }
+        h4 { font-family:'Source Serif 4',serif; font-weight:600; font-size:0.98rem; margin:0.9rem 0 0.3rem; }
+        h4:first-of-type { margin-top: 0; }
+        p, li { font-size: 0.88rem; line-height: 1.5; }
+        .meta { color:#5B6660; font-size:0.85rem; margin-bottom:1.6rem; }
+        @media print { body { padding: 1cm; } }
+      </style></head>
+      <body>
+        ${(configuracionCache.nombre_negocio || configuracionCache.logo_base64) ? `<div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1.2rem;color:#5B6660;font-size:0.85rem;">${configuracionCache.logo_base64 ? `<img src="${configuracionCache.logo_base64}" style="height:26px;">` : ''}${configuracionCache.nombre_negocio ? escapeHtml(configuracionCache.nombre_negocio) : ''}</div>` : ''}
+        <h1>${escapeHtml(f.nombre)}</h1>
+        <div class="meta">${f.esProyectoReal ? 'Estado: ' + escapeHtml(f.estado || 'sin estado') + ' · ' : ''}${f.propuestas.length} propuesta${f.propuestas.length === 1 ? '' : 's'} · generado ${new Date().toLocaleDateString('es-AR')}</div>
+        ${bloques}
+      </body></html>`;
+
+    const w = window.open('', '_blank');
+    if (!w) { alert('El navegador bloqueó la ventana nueva — permití pop-ups para este sitio y probá de nuevo.'); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+    w.onload = () => setTimeout(() => w.print(), 400);
+  }
+
+  generarBtn.onclick = generarPropuesta;
+
+  // ========== TABS ==========
+  const tabRelevarBtn = document.getElementById('tabRelevarBtn');
+  const tabProyectosBtn = document.getElementById('tabProyectosBtn');
+  const tabConocimientoBtn = document.getElementById('tabConocimientoBtn');
+  const tabAjustesBtn = document.getElementById('tabAjustesBtn');
+  const viewRelevar = document.getElementById('viewRelevar');
+  const viewProyectos = document.getElementById('viewProyectos');
+  const viewConocimiento = document.getElementById('viewConocimiento');
+  const viewAjustes = document.getElementById('viewAjustes');
+  const todasLasTabs = [
+    [tabRelevarBtn, viewRelevar],
+    [tabProyectosBtn, viewProyectos],
+    [tabConocimientoBtn, viewConocimiento],
+    [tabAjustesBtn, viewAjustes],
+  ];
+  function activarTab(btnActivo, viewActiva, onActivar) {
+    todasLasTabs.forEach(([b, v]) => { b.classList.toggle('active', b === btnActivo); v.classList.toggle('active', v === viewActiva); });
+    if (onActivar) onActivar();
+  }
+  tabRelevarBtn.onclick = () => activarTab(tabRelevarBtn, viewRelevar);
+  tabProyectosBtn.onclick = () => activarTab(tabProyectosBtn, viewProyectos, cargarVistaProyectos);
+  tabConocimientoBtn.onclick = () => activarTab(tabConocimientoBtn, viewConocimiento, cargarVistaConocimiento);
+  tabAjustesBtn.onclick = () => activarTab(tabAjustesBtn, viewAjustes, cargarVistaAjustes);
+
+  // ========== AJUSTES (marca + tarifa) ==========
+  let configuracionCache = { nombre_negocio: '', logo_base64: '', tarifa_hora: null };
+  const ajNombreNegocio = document.getElementById('ajNombreNegocio');
+  const ajLogo = document.getElementById('ajLogo');
+  const ajLogoPreview = document.getElementById('ajLogoPreview');
+  const ajTarifa = document.getElementById('ajTarifa');
+  const ajGuardarBtn = document.getElementById('ajGuardarBtn');
+  const ajGuardadoMsg = document.getElementById('ajGuardadoMsg');
+
+  async function cargarConfiguracion() {
+    const { data } = await sb.from('configuracion').select('*').eq('id', '1').single();
+    if (data) configuracionCache = data;
+    return configuracionCache;
+  }
+
+  function cargarVistaAjustes() {
+    ajNombreNegocio.value = configuracionCache.nombre_negocio || '';
+    ajTarifa.value = configuracionCache.tarifa_hora || '';
+    if (configuracionCache.logo_base64) { ajLogoPreview.src = configuracionCache.logo_base64; ajLogoPreview.style.display = ''; }
+  }
+
+  ajLogo.addEventListener('change', () => {
+    const file = ajLogo.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { configuracionCache.logo_base64 = reader.result; ajLogoPreview.src = reader.result; ajLogoPreview.style.display = ''; };
+    reader.readAsDataURL(file);
+  });
+
+  ajGuardarBtn.onclick = async () => {
+    const payload = {
+      id: '1',
+      nombre_negocio: ajNombreNegocio.value.trim() || null,
+      logo_base64: configuracionCache.logo_base64 || null,
+      tarifa_hora: parseFloat(ajTarifa.value) || null,
+    };
+    const { error } = await sb.from('configuracion').upsert(payload);
+    if (error) { ajGuardadoMsg.textContent = 'No se pudo guardar.'; return; }
+    configuracionCache = payload;
+    ajGuardadoMsg.textContent = 'Guardado ✓';
+    setTimeout(() => { ajGuardadoMsg.textContent = ''; }, 2500);
+  };
+
+  // ========== VISTA PROYECTOS ==========
+  const proyectosList2 = document.getElementById('proyectosList2');
+  const buscarProyectoInput = document.getElementById('buscarProyectoInput');
+  let proyectosFilasCache = [];
+  let proyectosBusqueda = '';
+
+  buscarProyectoInput.addEventListener('input', () => {
+    proyectosBusqueda = buscarProyectoInput.value.trim().toLowerCase();
+    renderProyectosList();
+  });
+
+  async function cargarVistaProyectos() {
+    proyectosList2.innerHTML = '<div class="empty-note">Cargando…</div>';
+    const { data: proyectosData, error: e1 } = await sb.from('proyectos').select('id, nombre, estado, clientes(nombre)');
+    const { data: propuestasData } = await sb.from('propuestas').select('*').order('creado_at', { ascending: false });
+    if (e1) { proyectosList2.innerHTML = '<div class="empty-note">No se pudo cargar la lista de proyectos de Cartera Viva.</div>'; return; }
+
+    const porProyecto = {};
+    (propuestasData || []).forEach(p => {
+      const key = p.proyecto_id || ('libre:' + (p.cliente_texto || ''));
+      (porProyecto[key] = porProyecto[key] || []).push(p);
+    });
+
+    const filas = (proyectosData || []).map(pr => ({
+      id: pr.id,
+      esProyectoReal: true,
+      nombre: (pr.clientes && pr.clientes.nombre) || pr.nombre,
+      estado: pr.estado,
+      propuestas: porProyecto[pr.id] || [],
+    }));
+
+    Object.keys(porProyecto).forEach(key => {
+      if (key.startsWith('libre:') && key !== 'libre:') {
+        filas.push({ id: key, esProyectoReal: false, nombre: key.slice(6), estado: 'sin vincular', propuestas: porProyecto[key] });
+      }
+    });
+
+    filas.forEach(f => {
+      f.ultimaFecha = f.propuestas.length ? f.propuestas[0].creado_at : null; // ya vienen ordenadas desc
+    });
+    filas.sort((a, b) => {
+      if (!a.ultimaFecha && !b.ultimaFecha) return (a.nombre || '').localeCompare(b.nombre || '');
+      if (!a.ultimaFecha) return 1;
+      if (!b.ultimaFecha) return -1;
+      return new Date(b.ultimaFecha) - new Date(a.ultimaFecha);
+    });
+
+    proyectosFilasCache = filas;
+    renderMetricas(propuestasData || []);
+    renderSeguimiento(filas);
+    renderProyectosList();
+  }
+
+  function renderMetricas(propuestasData) {
+    const hoy = new Date();
+    const esteMes = propuestasData.filter(p => {
+      const d = p.creado_at ? new Date(p.creado_at) : null;
+      return d && d.getMonth() === hoy.getMonth() && d.getFullYear() === hoy.getFullYear();
+    }).length;
+    const aceptadas = propuestasData.filter(p => p.estado === 'aceptada').length;
+    const porTema = {};
+    propuestasData.forEach(p => {
+      const nombre = (temas.find(t => t.id === p.tema_id) || {}).nombre || 'sin tema';
+      porTema[nombre] = (porTema[nombre] || 0) + 1;
+    });
+    const temaTop = Object.entries(porTema).sort((a, b) => b[1] - a[1])[0];
+
+    document.getElementById('metricasWrap').innerHTML = `
+      <div class="metricas-bar">
+        <div class="metrica"><div class="num">${esteMes}</div><div class="label">propuestas este mes</div></div>
+        <div class="metrica"><div class="num">${aceptadas}</div><div class="label">aceptadas (total)</div></div>
+        <div class="metrica"><div class="num">${propuestasData.length}</div><div class="label">propuestas totales</div></div>
+        ${temaTop ? `<div class="metrica"><div class="num">${escapeHtml(temaTop[0])}</div><div class="label">tema más frecuente (${temaTop[1]})</div></div>` : ''}
+      </div>`;
+  }
+
+  function renderSeguimiento(filas) {
+    const QUINCE_DIAS = 15 * 24 * 60 * 60 * 1000;
+    const ahora = Date.now();
+    const estancados = filas.filter(f => f.ultimaFecha && (ahora - new Date(f.ultimaFecha).getTime()) > QUINCE_DIAS);
+    const wrap = document.getElementById('seguimientoWrap');
+    if (!estancados.length) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `<div class="seguimiento-banner"><strong>Sin actividad hace más de 15 días:</strong> ${estancados.map(f => escapeHtml(f.nombre)).join(', ')}</div>`;
+  }
+
+  function renderProyectosList() {
+    const filas = proyectosBusqueda
+      ? proyectosFilasCache.filter(f => (f.nombre || '').toLowerCase().includes(proyectosBusqueda))
+      : proyectosFilasCache;
+
+    if (!proyectosFilasCache.length) { proyectosList2.innerHTML = '<div class="empty-note">Todavía no hay proyectos ni propuestas generadas.</div>'; return; }
+    if (!filas.length) { proyectosList2.innerHTML = '<div class="empty-note">Sin resultados para esa búsqueda.</div>'; return; }
+
+    proyectosList2.innerHTML = filas.map((f, i) => `
+      <div class="proyecto-row" data-i="${i}">
+        <span class="nombre">${escapeHtml(f.nombre || '(sin nombre)')}</span>
+        <span class="estado">${escapeHtml(f.estado || 'sin estado')}</span>
+        <span class="cantidad">${f.ultimaFecha ? new Date(f.ultimaFecha).toLocaleDateString('es-AR') : 'sin actividad'} · ${f.propuestas.length} propuesta${f.propuestas.length === 1 ? '' : 's'}</span>
+      </div>
+      <div class="proyecto-detalle-slot" data-i="${i}"></div>
+    `).join('');
+
+    proyectosList2.querySelectorAll('.proyecto-row').forEach(row => {
+      row.onclick = () => {
+        const i = +row.dataset.i;
+        const slot = proyectosList2.querySelector(`.proyecto-detalle-slot[data-i="${i}"]`);
+        if (slot.dataset.open === '1') { slot.innerHTML = ''; slot.dataset.open = '0'; return; }
+        renderProyectoDetalle(slot, filas[i]);
+        slot.dataset.open = '1';
+      };
+    });
+  }
+
+  function renderProyectoDetalle(slot, f) {
+    const listaPropuestas = f.propuestas.length
+      ? f.propuestas.map(p => {
+          const fecha = p.creado_at ? new Date(p.creado_at).toLocaleDateString('es-AR') : '';
+          return `<div class="historial-item" data-pid="${p.id}"><span class="cliente">${escapeHtml(p.cliente_texto || f.nombre)}</span><span class="fecha">${fecha}</span></div>`;
+        }).join('')
+      : '<span class="empty-note">Sin propuestas generadas todavía para este proyecto.</span>';
+
+    const accionesProyecto = f.esProyectoReal ? `
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.9rem;flex-wrap:wrap;">
+        <button id="editarProyectoBtn">Editar</button>
+        <button id="borrarProyectoBtn">Borrar proyecto</button>
+        <button id="descargarPdfBtn">Descargar PDF</button>
+      </div>
+      <div id="editarProyectoForm"></div>` : `
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.9rem;flex-wrap:wrap;">
+        <button id="descargarPdfBtn">Descargar PDF</button>
+      </div>`;
+
+    slot.innerHTML = `<div class="proyecto-detalle">${accionesProyecto}<div>${listaPropuestas}</div>
+      <div class="preguntas-panel" style="margin-top:0.9rem;">
+        <div class="titulo-tema">Archivos adjuntos</div>
+        <div class="archivos-list" id="archivosList">Cargando…</div>
+        <div class="pregunta-add" style="margin-top:0.7rem;">
+          <input type="file" id="archivoInput">
+          <button id="subirArchivoBtn">Subir</button>
+        </div>
+      </div>
+    </div>`;
+
+    slot.querySelector('#descargarPdfBtn').onclick = (ev) => { ev.stopPropagation(); descargarPdfProyecto(f); };
+    cargarArchivosProyecto(f, slot.querySelector('#archivosList'));
+    slot.querySelector('#subirArchivoBtn').onclick = (ev) => { ev.stopPropagation(); subirArchivoProyecto(f, slot); };
+
+    slot.querySelectorAll('.historial-item').forEach(item => {
+      item.onclick = (ev) => {
+        ev.stopPropagation();
+        const p = f.propuestas.find(x => x.id === item.dataset.pid);
+        const contenido = typeof p.contenido === 'string' ? parsearJsonTolerante(p.contenido) : p.contenido;
+        if (!contenido) return;
+        activarTab(tabRelevarBtn, viewRelevar);
+        mostrarPropuesta({ id: p.id, estado: p.estado, ...contenido, gantt: p.gantt || contenido.gantt || [] });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+    });
+
+    if (f.esProyectoReal) {
+      const editarBtn = slot.querySelector('#editarProyectoBtn');
+      const borrarBtn = slot.querySelector('#borrarProyectoBtn');
+      editarBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        const form = slot.querySelector('#editarProyectoForm');
+        form.innerHTML = `
+          <div class="form-row two" style="margin:0.8rem 0;">
+            <div><label>Nombre</label><input type="text" id="editNombre" value="${escapeHtml(f.nombre || '')}"></div>
+            <div><label>Estado</label><input type="text" id="editEstado" value="${escapeHtml(f.estado || '')}"></div>
+          </div>
+          <button class="primary" id="guardarEditProyecto">Guardar</button>`;
+        document.getElementById('guardarEditProyecto').onclick = async (ev2) => {
+          ev2.stopPropagation();
+          const nombre = document.getElementById('editNombre').value.trim();
+          const estado = document.getElementById('editEstado').value.trim();
+          await sb.from('proyectos').update({ nombre, estado }).eq('id', f.id);
+          await cargarVistaProyectos();
+        };
+      };
+      borrarBtn.onclick = async (ev) => {
+        ev.stopPropagation();
+        if (!confirm(`¿Borrar el proyecto "${f.nombre}"? Las propuestas generadas quedan sin proyecto vinculado, no se borran.`)) return;
+        await sb.from('proyectos').delete().eq('id', f.id);
+        await cargarVistaProyectos();
+      };
+    }
+  }
+
+  // ========== VISTA CONOCIMIENTO ==========
+  const conocimientoTemasList = document.getElementById('conocimientoTemasList');
+  const conoTemaSelect = document.getElementById('conoTemaSelect');
+  const conoTitulo = document.getElementById('conoTitulo');
+  const conoContenido = document.getElementById('conoContenido');
+  const conoFuente = document.getElementById('conoFuente');
+  const conoGuardarBtn = document.getElementById('conoGuardarBtn');
+  const conocimientoList = document.getElementById('conocimientoList');
+  let conocimientoTemaFiltro = null; // null = "todos"
+  let conocimientoCache = [];
+
+  function refrescarSelectsTema() {
+    const opciones = temas.map(t => `<option value="${t.id}">${escapeHtml(t.nombre)}</option>`).join('');
+    conoTemaSelect.innerHTML = '<option value="">— sin tema específico —</option>' + opciones;
+  }
+
+  async function cargarVistaConocimiento() {
+    refrescarSelectsTema();
+    renderConocimientoTemasChips();
+    const { data, error } = await sb.from('conocimiento').select('*').order('creado_at', { ascending: false });
+    if (error) { conocimientoList.innerHTML = '<div class="empty-note">No se pudo cargar el conocimiento guardado.</div>'; return; }
+    conocimientoCache = data || [];
+    renderConocimientoList();
+  }
+
+  function renderConocimientoTemasChips() {
+    conocimientoTemasList.innerHTML = '';
+    const todos = document.createElement('button');
+    todos.className = 'tema-chip' + (conocimientoTemaFiltro === null ? ' active' : '');
+    todos.textContent = 'Todos';
+    todos.onclick = () => { conocimientoTemaFiltro = null; renderConocimientoTemasChips(); renderConocimientoList(); };
+    conocimientoTemasList.appendChild(todos);
+    temas.forEach(t => {
+      const chip = document.createElement('button');
+      chip.className = 'tema-chip' + (conocimientoTemaFiltro === t.id ? ' active' : '');
+      chip.textContent = t.nombre;
+      chip.onclick = () => { conocimientoTemaFiltro = t.id; renderConocimientoTemasChips(); renderConocimientoList(); };
+      conocimientoTemasList.appendChild(chip);
+    });
+  }
+
+  function renderConocimientoList() {
+    const filtrado = conocimientoTemaFiltro ? conocimientoCache.filter(c => c.tema_id === conocimientoTemaFiltro) : conocimientoCache;
+    if (!filtrado.length) { conocimientoList.innerHTML = '<div class="empty-note">Todavía no hay nada guardado acá.</div>'; return; }
+    conocimientoList.innerHTML = filtrado.map(c => {
+      const temaNombre = (temas.find(t => t.id === c.tema_id) || {}).nombre;
+      const fecha = c.creado_at ? new Date(c.creado_at).toLocaleDateString('es-AR') : '';
+      return `
+        <div class="preguntas-panel" style="margin-bottom:0.9rem;" data-id="${c.id}">
+          <div class="titulo-tema">${escapeHtml(c.titulo)}${temaNombre ? `<span class="tag-warm">${escapeHtml(temaNombre)}</span>` : ''}</div>
+          <p style="white-space:pre-wrap;font-size:0.9rem;margin:0 0 0.6rem;">${escapeHtml(c.contenido)}</p>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="empty-note" style="padding:0;">${escapeHtml(c.fuente || '')}${c.fuente ? ' — ' : ''}${fecha}</span>
+            <button class="del-cono" data-id="${c.id}">Borrar</button>
+          </div>
+        </div>`;
+    }).join('');
+    conocimientoList.querySelectorAll('.del-cono').forEach(btn => {
+      btn.onclick = async () => {
+        await sb.from('conocimiento').delete().eq('id', btn.dataset.id);
+        conocimientoCache = conocimientoCache.filter(c => c.id !== btn.dataset.id);
+        renderConocimientoList();
+      };
+    });
+  }
+
+  // ---------- carga de PDF/DOCX: extrae el texto y lo pone en el textarea ----------
+  const conoArchivo = document.getElementById('conoArchivo');
+  const conoArchivoEstado = document.getElementById('conoArchivoEstado');
+  const LIMITE_CONTENIDO = 50000; // recorte por las dudas de PDFs enormes
+
+  let libsCargadas = null;
+  function cargarLibsArchivo() {
+    if (libsCargadas) return libsCargadas;
+    libsCargadas = Promise.all([
+      cargarScript('https://cdn.jsdelivr.net/npm/[email protected]/build/pdf.min.js').then(() => {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/[email protected]/build/pdf.worker.min.js';
+      }),
+      cargarScript('https://cdn.jsdelivr.net/npm/mammoth/mammoth.browser.min.js'),
+    ]);
+    return libsCargadas;
+  }
+  function cargarScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function extraerTextoPdf(arrayBuffer) {
+    const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let texto = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      texto += content.items.map(it => it.str).join(' ') + '\n\n';
+      if (texto.length > LIMITE_CONTENIDO) break;
+    }
+    return texto;
+  }
+  async function extraerTextoDocx(arrayBuffer) {
+    const res = await window.mammoth.extractRawText({ arrayBuffer });
+    return res.value;
+  }
+
+  conoArchivo.addEventListener('change', async () => {
+    const file = conoArchivo.files[0];
+    if (!file) return;
+    conoArchivoEstado.textContent = 'Leyendo el archivo…';
+    try {
+      await cargarLibsArchivo();
+      const buffer = await file.arrayBuffer();
+      let texto = '';
+      if (file.name.toLowerCase().endsWith('.pdf')) {
+        texto = await extraerTextoPdf(buffer);
+      } else if (file.name.toLowerCase().endsWith('.docx')) {
+        texto = await extraerTextoDocx(buffer);
+      } else {
+        conoArchivoEstado.textContent = 'Formato no soportado — usá PDF o .docx (el .doc viejo no se puede leer desde el navegador; convertilo a .docx o pegá el texto a mano).';
+        return;
+      }
+      texto = texto.trim().slice(0, LIMITE_CONTENIDO);
+      if (!texto) {
+        conoArchivoEstado.textContent = 'No se encontró texto en el archivo (¿es un PDF escaneado, solo imagen?). Pegá el contenido a mano.';
+        return;
+      }
+      conoContenido.value = texto;
+      if (!conoTitulo.value.trim()) conoTitulo.value = file.name.replace(/\.(pdf|docx)$/i, '');
+      conoArchivoEstado.textContent = `Texto extraído (${texto.length.toLocaleString('es-AR')} caracteres) — revisalo abajo antes de guardar.`;
+    } catch (e) {
+      conoArchivoEstado.textContent = 'No se pudo leer el archivo. Probá pegando el texto a mano.';
+    }
+  });
+
+  conoGuardarBtn.onclick = async () => {
+    const titulo = conoTitulo.value.trim();
+    const contenido = conoContenido.value.trim();
+    if (!titulo || !contenido) return;
+    const { data, error } = await sb.from('conocimiento').insert({
+      tema_id: conoTemaSelect.value || null,
+      titulo, contenido,
+      fuente: conoFuente.value.trim() || null,
+    }).select().single();
+    if (error) { alert('No se pudo guardar.'); return; }
+    conocimientoCache.unshift(data);
+    renderConocimientoList();
+    conoTitulo.value = ''; conoContenido.value = ''; conoFuente.value = ''; conoTemaSelect.value = '';
+    conoArchivo.value = ''; conoArchivoEstado.textContent = '';
+  };
+
+  // el generador consulta esto para sumar contexto por tema al armar la propuesta
+  async function conocimientoParaTema(temaId) {
+    if (!temaId) return [];
+    const { data } = await sb.from('conocimiento').select('*').eq('tema_id', temaId).order('creado_at', { ascending: false }).limit(6);
+    return data || [];
+  }
+})();
+</script>
+</body>
+</html>

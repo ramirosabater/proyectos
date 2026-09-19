@@ -131,6 +131,26 @@ mano. Un PDF escaneado (solo imagen, sin texto real) tampoco va a andar,
 porque no hace OCR.
 
 
+## 9. Todo lo nuevo: aceptación del cliente, edición, marca, seguimiento, métricas y adjuntos
+
+Correr estas tres migraciones (en cualquier orden, las tres son independientes):
+
+- `supabase_migracion_estado.sql` — agrega si la propuesta fue aceptada por el cliente.
+- `supabase_migracion_configuracion.sql` — tu marca (nombre, logo) y tarifa por hora.
+- `supabase_migracion_archivos.sql` — crea el bucket de Storage para adjuntos.
+
+Y subir el nuevo `netlify/functions/aceptar-propuesta.js` junto con el resto (usa las mismas variables de entorno del paso 7 — `SUPABASE_SERVICE_ROLE_KEY` — así que si ya configuraste "Compartir", esto no necesita nada adicional).
+
+Qué hace cada cosa:
+- **Aceptar propuesta**: el cliente ve un botón "Acepto la propuesta" en el link que le mandaste (`ver.html`). Al tocarlo, queda marcada como aceptada — lo vas a ver como una tildecita verde en el historial y en Proyectos, y entra en la métrica de "aceptadas".
+- **Editar texto**: en cualquier propuesta, botón "Editar texto" — todo el contenido se vuelve editable, incluida una calculadora de inversión (monto fijo, o horas × tu tarifa) para que el link que le mandás al cliente ya lleve un presupuesto real en vez de "a definir".
+- **Ajustes → marca**: cargá tu nombre de consultora/logo y tu tarifa por hora una sola vez (pestaña Ajustes). Aparece en el link público y en el PDF descargado; la tarifa precarga la calculadora de inversión.
+- **Panel de seguimiento**: en Proyectos, si algún cliente no tiene actividad hace más de 15 días, aparece un aviso arriba de la lista.
+- **Métricas**: contador de propuestas del mes, aceptadas totales y el tema más frecuente, arriba de Proyectos.
+- **Archivos adjuntos**: dentro del detalle de cada proyecto, subís fotos/planos/capturas — quedan en un bucket privado de Supabase Storage, solo vos (logueado) podés verlos o bajarlos.
+
+## Notas de seguridad
+
 - La clave de Anthropic vive **solo** como variable de entorno de la
   función de Netlify — nunca llega al navegador. La función
   (`netlify/functions/generar-propuesta.js`) además verifica que quien la
