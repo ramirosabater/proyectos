@@ -687,6 +687,78 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
     });
   }
 
+  // ========== DESCARGAR PDF DE UN PROYECTO (via impresión del navegador) ==========
+  function seccionPropuestaHTML(contenido, gantt) {
+    const criterios = (contenido.criterios_exito || '').split('\n').map(l => l.replace(/^[-*]\s*/, '').trim()).filter(Boolean);
+    return `
+      <h4>Dolor en una línea</h4><p>${escapeHtml(contenido.dolor || '')}</p>
+      <h4>Solución propuesta</h4><p>${escapeHtml(contenido.solucion || '')}</p>
+      <h4>Cronograma estimado</h4>
+      ${renderGanttEstaticoHTML(gantt || contenido.gantt || [])}
+      <h4>Inversión</h4><p>${escapeHtml(contenido.inversion || '')}</p>
+      <h4>Costo de la inacción</h4><p>${escapeHtml(contenido.costo_inaccion || '')}</p>
+      <h4>Criterios de éxito</h4><ul>${criterios.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>
+      <h4>Próximo paso concreto</h4><p>${escapeHtml(contenido.proximo_paso || '')}</p>`;
+  }
+
+  function renderGanttEstaticoHTML(tareas) {
+    if (!tareas || !tareas.length) return '<p style="color:#5B6660;font-style:italic;">Sin etapas cargadas.</p>';
+    const maxSemana = Math.max(1, ...tareas.map(t => t.semana_fin || t.semana_inicio || 1));
+    const responsablesUnicos = [...new Set(tareas.map(t => t.responsable || 'Sin asignar'))];
+    let html = `<div style="border:1px solid #C7CDBE;border-radius:3px;padding:0.8rem 1rem;margin:0.4rem 0 1rem;">`;
+    tareas.forEach(t => {
+      const ini = Math.max(1, t.semana_inicio || 1), fin = Math.max(ini, t.semana_fin || ini);
+      const left = ((ini - 1) / maxSemana) * 100, width = ((fin - ini + 1) / maxSemana) * 100;
+      html += `<div style="display:grid;grid-template-columns:140px 1fr;gap:0.5rem;align-items:center;padding:0.2rem 0;">
+        <div style="font-size:0.78rem;">${escapeHtml(t.tarea)}</div>
+        <div style="position:relative;height:1.1rem;background:#EEF0EA;border-radius:2px;">
+          <div style="position:absolute;top:0;bottom:0;left:${left}%;width:${width}%;background:${colorResponsable(t.responsable)};border-radius:2px;font-size:0.65rem;color:#fff;display:flex;align-items:center;padding:0 0.3rem;overflow:hidden;white-space:nowrap;">${escapeHtml(t.responsable||'')}</div>
+        </div></div>`;
+    });
+    html += `<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.6rem;">${responsablesUnicos.map(r => `<span style="font-size:0.72rem;color:#5B6660;"><span style="display:inline-block;width:0.5rem;height:0.5rem;border-radius:50%;background:${colorResponsable(r)};margin-right:0.3rem;"></span>${escapeHtml(r)}</span>`).join('')}</div>`;
+    html += `</div>`;
+    return html;
+  }
+
+  function descargarPdfProyecto(f) {
+    if (!f.propuestas.length) { alert('Este proyecto todavía no tiene propuestas generadas.'); return; }
+    const bloques = f.propuestas.map(p => {
+      const contenido = typeof p.contenido === 'string' ? parsearJsonTolerante(p.contenido) : p.contenido;
+      if (!contenido) return '';
+      const fecha = p.creado_at ? new Date(p.creado_at).toLocaleDateString('es-AR') : '';
+      const temaNombre = (temas.find(t => t.id === p.tema_id) || {}).nombre;
+      return `
+        <section style="page-break-inside:avoid;border:1px solid #C7CDBE;border-radius:3px;padding:1.2rem 1.4rem;margin-bottom:1.4rem;">
+          <div style="font-size:0.8rem;color:#5B6660;margin-bottom:0.3rem;">${fecha}${temaNombre ? ' · ' + escapeHtml(temaNombre) : ''}</div>
+          ${seccionPropuestaHTML(contenido, p.gantt)}
+        </section>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+      <title>${escapeHtml(f.nombre)} — Cuaderno de relevamiento</title>
+      <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+      <style>
+        * { box-sizing: border-box; }
+        body { font-family:'IBM Plex Sans',-apple-system,sans-serif; color:#1B2420; padding:2rem 2.4rem; }
+        h1 { font-family:'Source Serif 4',serif; font-weight:700; font-size:1.6rem; margin:0 0 0.2rem; }
+        h4 { font-family:'Source Serif 4',serif; font-weight:600; font-size:0.98rem; margin:0.9rem 0 0.3rem; }
+        h4:first-of-type { margin-top: 0; }
+        p, li { font-size: 0.88rem; line-height: 1.5; }
+        .meta { color:#5B6660; font-size:0.85rem; margin-bottom:1.6rem; }
+        @media print { body { padding: 1cm; } }
+      </style></head>
+      <body>
+        <h1>${escapeHtml(f.nombre)}</h1>
+        <div class="meta">${f.esProyectoReal ? 'Estado: ' + escapeHtml(f.estado || 'sin estado') + ' · ' : ''}${f.propuestas.length} propuesta${f.propuestas.length === 1 ? '' : 's'} · generado ${new Date().toLocaleDateString('es-AR')}</div>
+        ${bloques}
+      </body></html>`;
+
+    const w = window.open('', '_blank');
+    if (!w) { alert('El navegador bloqueó la ventana nueva — permití pop-ups para este sitio y probá de nuevo.'); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+    w.onload = () => setTimeout(() => w.print(), 400);
+  }
+
   generarBtn.onclick = generarPropuesta;
 
   // ========== TABS ==========
@@ -797,13 +869,19 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
       : '<span class="empty-note">Sin propuestas generadas todavía para este proyecto.</span>';
 
     const accionesProyecto = f.esProyectoReal ? `
-      <div style="display:flex;gap:0.5rem;margin-bottom:0.9rem;">
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.9rem;flex-wrap:wrap;">
         <button id="editarProyectoBtn">Editar</button>
         <button id="borrarProyectoBtn">Borrar proyecto</button>
+        <button id="descargarPdfBtn">Descargar PDF</button>
       </div>
-      <div id="editarProyectoForm"></div>` : '';
+      <div id="editarProyectoForm"></div>` : `
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.9rem;flex-wrap:wrap;">
+        <button id="descargarPdfBtn">Descargar PDF</button>
+      </div>`;
 
     slot.innerHTML = `<div class="proyecto-detalle">${accionesProyecto}<div>${listaPropuestas}</div></div>`;
+
+    slot.querySelector('#descargarPdfBtn').onclick = (ev) => { ev.stopPropagation(); descargarPdfProyecto(f); };
 
     slot.querySelectorAll('.historial-item').forEach(item => {
       item.onclick = (ev) => {
