@@ -235,6 +235,10 @@
           <select id="temaSelect"><option value="">— elegí un tema —</option></select>
         </div>
       </div>
+      <div class="form-row">
+        <label for="empresaInput">Empresa (opcional — para el saludo formal, ej. "Pepe S.A.")</label>
+        <input type="text" id="empresaInput" placeholder="Ej. Pepe S.A.">
+      </div>
 
       <div class="form-row">
         <label for="notasInput">Notas de la reunión</label>
@@ -529,6 +533,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
 
   async function generarPropuesta() {
     const cliente = clienteInput.value.trim();
+    const empresa = document.getElementById('empresaInput').value.trim();
     const temaId = temaSelect.value;
     const tema = temas.find(t => t.id === temaId);
     const notas = notasInput.value.trim();
@@ -556,6 +561,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
       const { data: inserted, error: insErr } = await sb.from('propuestas').insert({
         proyecto_id: proyectoIdPorNombre(cliente),
         cliente_texto: cliente || null,
+        empresa_texto: empresa || null,
         tema_id: temaId || null,
         notas,
         contenido: JSON.stringify(parsed),
@@ -563,7 +569,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
       }).select().single();
       if (insErr) throw insErr;
 
-      propuestaActual = { id: inserted.id, estado: inserted.estado, ...parsed };
+      propuestaActual = { id: inserted.id, estado: inserted.estado, empresa_texto: inserted.empresa_texto, ...parsed };
       mostrarPropuesta(propuestaActual);
       await cargarHistorial();
     } catch (e) {
@@ -593,7 +599,10 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
     if (!editando) {
       outputWrap.innerHTML = `
         <div class="propuesta-output">
-          <div style="display:flex;justify-content:flex-end;">${badgeEstado}</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>${p.empresa_texto ? `<p style="font-weight:600;margin:0 0 0.6rem;">Sres. ${escapeHtml(p.empresa_texto)}</p>` : ''}</div>
+            ${badgeEstado}
+          </div>
           <h3>Dolor en una línea</h3><p>${escapeHtml(p.dolor || '')}</p>
           <h3>Solución propuesta</h3><p>${escapeHtml(p.solucion || '')}</p>
           <h3>Gantt estimado</h3>
@@ -623,6 +632,8 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
     const tarifaDefault = configuracionCache.tarifa_hora || '';
     outputWrap.innerHTML = `
       <div class="propuesta-output">
+        <label style="display:block;font-size:0.82rem;color:var(--ink-soft);margin-bottom:0.3rem;">Empresa (saludo formal)</label>
+        <input type="text" id="edEmpresa" value="${escapeHtml(p.empresa_texto || '')}" placeholder="Ej. Pepe S.A." style="margin-bottom:1rem;">
         <h3>Dolor en una línea</h3><textarea rows="2" id="edDolor">${escapeHtml(p.dolor || '')}</textarea>
         <h3>Solución propuesta</h3><textarea rows="3" id="edSolucion">${escapeHtml(p.solucion || '')}</textarea>
         <h3>Gantt estimado</h3>
@@ -685,6 +696,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
     document.getElementById('guardarTextoBtn').onclick = async () => {
       const actualizado = {
         ...p,
+        empresa_texto: document.getElementById('edEmpresa').value.trim() || null,
         dolor: document.getElementById('edDolor').value.trim(),
         solucion: document.getElementById('edSolucion').value.trim(),
         inversion: edInversion.value.trim(),
@@ -693,8 +705,8 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
         proximo_paso: document.getElementById('edProximoPaso').value.trim(),
       };
       if (p.id) {
-        const { id, gantt, ...contenido } = actualizado;
-        await sb.from('propuestas').update({ contenido: JSON.stringify(contenido) }).eq('id', p.id);
+        const { id, gantt, estado, empresa_texto, ...contenido } = actualizado;
+        await sb.from('propuestas').update({ contenido: JSON.stringify(contenido), empresa_texto }).eq('id', p.id);
       }
       propuestaActual = actualizado;
       renderPropuestaVista(actualizado, false);
@@ -720,14 +732,15 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
           <label for="mailClienteInput">Mail del cliente (opcional, para armar el envío)</label>
           <input type="text" id="mailClienteInput" placeholder="cliente@empresa.com">
         </div>
-        <button class="primary" id="enviarMailBtn">Abrir borrador de mail</button>
+        <button class="primary" id="enviarMailBtn">Abrir en Gmail</button>
       </div>`;
     document.getElementById('copiarLinkBtn').onclick = () => navigator.clipboard.writeText(link).catch(() => {});
     document.getElementById('enviarMailBtn').onclick = () => {
       const mail = document.getElementById('mailClienteInput').value.trim();
-      const asunto = encodeURIComponent(`Propuesta — ${p.cliente_texto || clienteInput.value || ''}`);
-      const cuerpo = encodeURIComponent(`Hola,\n\nTe comparto la propuesta:\n${link}\n\nSaludos.`);
-      window.location.href = `mailto:${mail}?subject=${asunto}&body=${cuerpo}`;
+      const asunto = `Propuesta — ${p.cliente_texto || clienteInput.value || ''}`;
+      const cuerpo = `Hola,\n\nTe comparto la propuesta:\n${link}\n\nSaludos.`;
+      const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(mail)}&su=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+      window.open(url, '_blank');
     };
   }
 
@@ -812,7 +825,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
       item.onclick = () => {
         const contenido = typeof row.contenido === 'string' ? parsearJsonTolerante(row.contenido) : row.contenido;
         if (!contenido) return;
-        mostrarPropuesta({ id: row.id, estado: row.estado, ...contenido, gantt: row.gantt || contenido.gantt || [] });
+        mostrarPropuesta({ id: row.id, estado: row.estado, empresa_texto: row.empresa_texto, ...contenido, gantt: row.gantt || contenido.gantt || [] });
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
       historialList.appendChild(item);
@@ -908,6 +921,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
       return `
         <section style="page-break-inside:avoid;border:1px solid #C7CDBE;border-radius:3px;padding:1.2rem 1.4rem;margin-bottom:1.4rem;">
           <div style="font-size:0.8rem;color:#5B6660;margin-bottom:0.3rem;">${fecha}${temaNombre ? ' · ' + escapeHtml(temaNombre) : ''}</div>
+          ${p.empresa_texto ? `<p style="font-weight:600;margin:0 0 0.5rem;">Sres. ${escapeHtml(p.empresa_texto)}</p>` : ''}
           ${seccionPropuestaHTML(contenido, p.gantt)}
         </section>`;
     }).join('');
@@ -1161,7 +1175,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
         const contenido = typeof p.contenido === 'string' ? parsearJsonTolerante(p.contenido) : p.contenido;
         if (!contenido) return;
         activarTab(tabRelevarBtn, viewRelevar);
-        mostrarPropuesta({ id: p.id, estado: p.estado, ...contenido, gantt: p.gantt || contenido.gantt || [] });
+        mostrarPropuesta({ id: p.id, estado: p.estado, empresa_texto: p.empresa_texto, ...contenido, gantt: p.gantt || contenido.gantt || [] });
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
     });

@@ -100,6 +100,7 @@
       main.innerHTML = `
         ${(marca.nombre_negocio || marca.logo_base64) ? `<div class="marca">${marca.logo_base64 ? `<img src="${marca.logo_base64}" alt="">` : ''}${marca.nombre_negocio ? escapeHtml(marca.nombre_negocio) : ''}</div>` : ''}
         <h1>${escapeHtml(data.cliente_texto || '')}</h1>
+        ${data.empresa_texto ? `<p style="font-weight:600;margin:0 0 0.4rem;">Sres. ${escapeHtml(data.empresa_texto)}</p>` : ''}
         <div class="fecha">${fecha}</div>
         <div class="propuesta-output">
           <h3>Dolor en una línea</h3><p>${escapeHtml(contenido.dolor || '')}</p>

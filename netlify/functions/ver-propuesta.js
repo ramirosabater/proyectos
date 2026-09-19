@@ -32,7 +32,7 @@ exports.handler = async (event) => {
     }
 
     const propResp = await fetch(
-      `${SUPABASE_URL}/rest/v1/propuestas?id=eq.${encodeURIComponent(shares[0].propuesta_id)}&select=cliente_texto,contenido,gantt,creado_at,estado`,
+      `${SUPABASE_URL}/rest/v1/propuestas?id=eq.${encodeURIComponent(shares[0].propuesta_id)}&select=cliente_texto,empresa_texto,contenido,gantt,creado_at,estado`,
       { headers }
     );
     if (!propResp.ok) throw new Error('propuesta_lookup_failed');
