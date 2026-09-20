@@ -149,6 +149,23 @@ Qué hace cada cosa:
 - **Métricas**: contador de propuestas del mes, aceptadas totales y el tema más frecuente, arriba de Proyectos.
 - **Archivos adjuntos**: dentro del detalle de cada proyecto, subís fotos/planos/capturas — quedan en un bucket privado de Supabase Storage, solo vos (logueado) podés verlos o bajarlos.
 
+## 10. Subprocesos dentro de cada tema
+
+Corré `supabase_migracion_subprocesos.sql`. Reorganiza el banco de
+preguntas: cada tema madre (Facturación, RRHH, etc.) pasa a tener
+subprocesos (por ejemplo, Facturación → "Emisión de facturas" y "Control
+y sistemas"), y **todas las preguntas que ya tenías cargadas se reasignan
+solas** al subproceso que les corresponde — no se pierde ninguna. Si
+habías agregado preguntas propias que no matchean ningún texto original,
+quedan agrupadas en un subproceso "General" para que no se pierdan de
+vista, y las podés mover mejor a mano después (borrarla y volver a
+cargarla en el subproceso correcto).
+
+Después de correr la migración, reemplazá `public/index.html` y
+redeployá — en el Banco de preguntas, al elegir un tema ahora aparece una
+fila de subprocesos abajo del nombre, y las preguntas se agregan/borran
+dentro del subproceso seleccionado, no sueltas en el tema.
+
 ## Notas de seguridad
 
 - La clave de Anthropic vive **solo** como variable de entorno de la

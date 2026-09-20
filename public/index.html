@@ -393,14 +393,31 @@
     if (data.session) mostrarApp();
   })();
 
-  // ========== BANCO DE PREGUNTAS ==========
+  // ========== BANCO DE PREGUNTAS (tema → subproceso → preguntas) ==========
+  let subprocesoActivoId = null;
+
   async function cargarTemas() {
-    const { data, error } = await sb.from('temas').select('id, nombre, slug, preguntas(id, texto, orden)').order('nombre');
+    const { data, error } = await sb.from('temas')
+      .select('id, nombre, slug, subprocesos(id, nombre, slug, orden, preguntas(id, texto, orden))')
+      .order('nombre');
     if (error) { preguntasPanel.innerHTML = '<div class="empty-note">No se pudo cargar el banco de preguntas.</div>'; return; }
-    temas = (data || []).map(t => ({ ...t, preguntas: (t.preguntas || []).sort((a, b) => a.orden - b.orden) }));
+    temas = (data || []).map(t => ({
+      ...t,
+      subprocesos: (t.subprocesos || [])
+        .map(s => ({ ...s, preguntas: (s.preguntas || []).sort((a, b) => a.orden - b.orden) }))
+        .sort((a, b) => a.orden - b.orden),
+    }));
     if (!temaActivoId && temas.length) temaActivoId = temas[0].id;
+    const temaActual = temas.find(t => t.id === temaActivoId);
+    if (temaActual && !temaActual.subprocesos.some(s => s.id === subprocesoActivoId)) {
+      subprocesoActivoId = temaActual.subprocesos.length ? temaActual.subprocesos[0].id : null;
+    }
     renderTemasList();
     renderPreguntasPanel();
+  }
+
+  function todasLasPreguntasDelTema(tema) {
+    return (tema.subprocesos || []).flatMap(s => s.preguntas || []);
   }
 
   function renderTemasList() {
@@ -409,7 +426,11 @@
       const chip = document.createElement('button');
       chip.className = 'tema-chip' + (t.id === temaActivoId ? ' active' : '');
       chip.textContent = t.nombre;
-      chip.onclick = () => { temaActivoId = t.id; renderTemasList(); renderPreguntasPanel(); };
+      chip.onclick = () => {
+        temaActivoId = t.id;
+        subprocesoActivoId = t.subprocesos.length ? t.subprocesos[0].id : null;
+        renderTemasList(); renderPreguntasPanel();
+      };
       temasList.appendChild(chip);
     });
     const prev = temaSelect.value;
@@ -426,29 +447,55 @@
   function renderPreguntasPanel() {
     const tema = temas.find(t => t.id === temaActivoId);
     if (!tema) { preguntasPanel.innerHTML = '<div class="empty-note">Elegí o creá un tema para ver sus preguntas.</div>'; return; }
-    const preguntas = tema.preguntas || [];
+
+    const subprocesosHtml = tema.subprocesos.map(s => `
+      <button class="tema-chip sub-chip${s.id === subprocesoActivoId ? ' active' : ''}" data-sid="${s.id}" style="font-size:0.78rem;padding:0.3rem 0.6rem;">${escapeHtml(s.nombre)} <span style="opacity:0.6;">(${(s.preguntas||[]).length})</span></button>
+    `).join('');
+
+    const subprocesoActivo = tema.subprocesos.find(s => s.id === subprocesoActivoId);
+    const preguntas = subprocesoActivo ? (subprocesoActivo.preguntas || []) : [];
+
     preguntasPanel.innerHTML = `
       <div class="titulo-tema">${escapeHtml(tema.nombre)}</div>
-      <ul class="preguntas">
-        ${preguntas.length ? preguntas.map(p => `
-          <li>
-            <span class="box"></span>
-            <span class="texto">${escapeHtml(p.texto)}</span>
-            <button class="del" data-pid="${p.id}" title="Borrar">✕</button>
-          </li>`).join('') : '<div class="empty-note">Sin preguntas todavía — agregá la primera abajo.</div>'}
-      </ul>
-      <div class="pregunta-add">
-        <input type="text" id="nuevaPreguntaInput" placeholder="Agregar una pregunta...">
-        <button id="nuevaPreguntaBtn">Agregar</button>
-      </div>`;
-    preguntasPanel.querySelectorAll('button.del').forEach(btn => {
-      btn.onclick = () => borrarPregunta(btn.dataset.pid);
+      <div class="temas-list" style="margin-bottom:1rem;">${subprocesosHtml}</div>
+      <div class="tema-add" style="margin-bottom:1rem;">
+        <input type="text" id="nuevoSubprocesoInput" placeholder="Agregar subproceso nuevo (ej. Cobranza)">
+        <button id="nuevoSubprocesoBtn">Agregar</button>
+      </div>
+      ${subprocesoActivo ? `
+        <ul class="preguntas">
+          ${preguntas.length ? preguntas.map(p => `
+            <li>
+              <span class="box"></span>
+              <span class="texto">${escapeHtml(p.texto)}</span>
+              <button class="del" data-pid="${p.id}" title="Borrar">✕</button>
+            </li>`).join('') : '<div class="empty-note">Sin preguntas todavía en este subproceso — agregá la primera abajo.</div>'}
+        </ul>
+        <div class="pregunta-add">
+          <input type="text" id="nuevaPreguntaInput" placeholder="Agregar una pregunta a ${escapeHtml(subprocesoActivo.nombre)}...">
+          <button id="nuevaPreguntaBtn">Agregar</button>
+        </div>` : '<div class="empty-note">Este tema todavía no tiene subprocesos — agregá uno arriba.</div>'}
+    `;
+
+    preguntasPanel.querySelectorAll('.sub-chip').forEach(chip => {
+      chip.onclick = () => { subprocesoActivoId = chip.dataset.sid; renderPreguntasPanel(); };
     });
-    const addInput = document.getElementById('nuevaPreguntaInput');
-    const addBtn = document.getElementById('nuevaPreguntaBtn');
-    const addFn = () => { const texto = addInput.value.trim(); if (texto) { agregarPregunta(tema.id, texto); addInput.value = ''; } };
-    addBtn.onclick = addFn;
-    addInput.addEventListener('keydown', e => { if (e.key === 'Enter') addFn(); });
+    const nuevoSubBtn = document.getElementById('nuevoSubprocesoBtn');
+    const nuevoSubInput = document.getElementById('nuevoSubprocesoInput');
+    const addSubFn = () => { const n = nuevoSubInput.value.trim(); if (n) { crearSubproceso(tema.id, n); nuevoSubInput.value = ''; } };
+    nuevoSubBtn.onclick = addSubFn;
+    nuevoSubInput.addEventListener('keydown', e => { if (e.key === 'Enter') addSubFn(); });
+
+    if (subprocesoActivo) {
+      preguntasPanel.querySelectorAll('button.del').forEach(btn => {
+        btn.onclick = () => borrarPregunta(btn.dataset.pid);
+      });
+      const addInput = document.getElementById('nuevaPreguntaInput');
+      const addBtn = document.getElementById('nuevaPreguntaBtn');
+      const addFn = () => { const texto = addInput.value.trim(); if (texto) { agregarPregunta(subprocesoActivo.id, texto); addInput.value = ''; } };
+      addBtn.onclick = addFn;
+      addInput.addEventListener('keydown', e => { if (e.key === 'Enter') addFn(); });
+    }
   }
 
   async function crearTema(nombre) {
@@ -456,12 +503,25 @@
     const { data, error } = await sb.from('temas').insert({ nombre, slug }).select().single();
     if (error) { alert('No se pudo crear el tema (¿ya existe uno con ese nombre?).'); return; }
     temaActivoId = data.id;
+    subprocesoActivoId = null;
     await cargarTemas();
   }
-  async function agregarPregunta(temaId, texto) {
+  async function crearSubproceso(temaId, nombre) {
     const tema = temas.find(t => t.id === temaId);
-    const orden = (tema.preguntas || []).length + 1;
-    await sb.from('preguntas').insert({ tema_id: temaId, texto, orden });
+    const orden = (tema.subprocesos || []).length + 1;
+    const slug = slugify(nombre);
+    const { data, error } = await sb.from('subprocesos').insert({ tema_id: temaId, nombre, slug, orden }).select().single();
+    if (error) { alert('No se pudo crear el subproceso (¿ya existe uno con ese nombre en este tema?).'); return; }
+    subprocesoActivoId = data.id;
+    await cargarTemas();
+  }
+  async function agregarPregunta(subprocesoId, texto) {
+    let orden = 1;
+    for (const t of temas) {
+      const s = t.subprocesos.find(x => x.id === subprocesoId);
+      if (s) { orden = (s.preguntas || []).length + 1; break; }
+    }
+    await sb.from('preguntas').insert({ subproceso_id: subprocesoId, texto, orden });
     await cargarTemas();
   }
   async function borrarPregunta(preguntaId) {
@@ -545,7 +605,7 @@ El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como
       const { data: sessionData } = await sb.auth.getSession();
       const token = sessionData.session && sessionData.session.access_token;
       const conocimiento = await conocimientoParaTema(temaId);
-      const prompt = promptPropuesta(cliente, tema ? tema.nombre : '', tema ? tema.preguntas : [], notas, conocimiento);
+      const prompt = promptPropuesta(cliente, tema ? tema.nombre : '', tema ? todasLasPreguntasDelTema(tema) : [], notas, conocimiento);
 
       const resp = await fetch('/.netlify/functions/generar-propuesta', {
         method: 'POST',
