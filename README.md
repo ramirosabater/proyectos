@@ -166,6 +166,23 @@ redeployá — en el Banco de preguntas, al elegir un tema ahora aparece una
 fila de subprocesos abajo del nombre, y las preguntas se agregan/borran
 dentro del subproceso seleccionado, no sueltas en el tema.
 
+## 11. Opciones de pago y Tablero de control
+
+Corré `supabase_migracion_pagos.sql`. Reemplazá `public/index.html` y redeployá.
+
+- **Opciones de pago**: en "Editar texto" de cualquier propuesta, el modo
+  "Opciones de pago" de la calculadora de Inversión te deja cargar un
+  monto base, un % de descuento por pago único, y una cantidad de cuotas
+  con su % de interés — arma el texto con las dos opciones para el
+  cliente.
+- **Cobros**: dentro de cada propuesta, una sección nueva "Cobros" donde
+  cargás cada pago esperado (descripción + monto) y los vas marcando
+  cobrado/pendiente a medida que entran.
+- **Tablero**: pestaña nueva. Muestra el total facturable estimado, lo
+  cobrado, lo pendiente y cuántas propuestas están aceptadas; abajo, el
+  avance por proyecto (cobrado vs. total) y la lista de cobros pendientes
+  sin resolver.
+
 ## Notas de seguridad
 
 - La clave de Anthropic vive **solo** como variable de entorno de la
