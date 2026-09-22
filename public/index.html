@@ -467,11 +467,15 @@
     const preguntas = subprocesoActivo ? (subprocesoActivo.preguntas || []) : [];
 
     preguntasPanel.innerHTML = `
-      <div class="titulo-tema">${escapeHtml(tema.nombre)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="titulo-tema">${escapeHtml(tema.nombre)}</div>
+        <button id="borrarTemaBtn" style="font-size:0.78rem;color:var(--danger);border-color:var(--danger);">Borrar tema</button>
+      </div>
       <div class="temas-list" style="margin-bottom:1rem;">${subprocesosHtml}</div>
       <div class="tema-add" style="margin-bottom:1rem;">
         <input type="text" id="nuevoSubprocesoInput" placeholder="Agregar subproceso nuevo (ej. Cobranza)">
         <button id="nuevoSubprocesoBtn">Agregar</button>
+        ${subprocesoActivo ? `<button id="borrarSubprocesoBtn" style="color:var(--danger);border-color:var(--danger);">Borrar "${escapeHtml(subprocesoActivo.nombre)}"</button>` : ''}
       </div>
       ${subprocesoActivo ? `
         <ul class="preguntas">
@@ -491,6 +495,9 @@
     preguntasPanel.querySelectorAll('.sub-chip').forEach(chip => {
       chip.onclick = () => { subprocesoActivoId = chip.dataset.sid; renderPreguntasPanel(); };
     });
+    document.getElementById('borrarTemaBtn').onclick = () => borrarTema(tema.id);
+    const borrarSubBtn = document.getElementById('borrarSubprocesoBtn');
+    if (borrarSubBtn) borrarSubBtn.onclick = () => borrarSubproceso(subprocesoActivo.id);
     const nuevoSubBtn = document.getElementById('nuevoSubprocesoBtn');
     const nuevoSubInput = document.getElementById('nuevoSubprocesoInput');
     const addSubFn = () => { const n = nuevoSubInput.value.trim(); if (n) { crearSubproceso(tema.id, n); nuevoSubInput.value = ''; } };
@@ -527,16 +534,32 @@
     await cargarTemas();
   }
   async function agregarPregunta(subprocesoId, texto) {
-    let orden = 1;
+    let orden = 1, temaIdDeSubproceso = null;
     for (const t of temas) {
       const s = t.subprocesos.find(x => x.id === subprocesoId);
-      if (s) { orden = (s.preguntas || []).length + 1; break; }
+      if (s) { orden = (s.preguntas || []).length + 1; temaIdDeSubproceso = t.id; break; }
     }
-    await sb.from('preguntas').insert({ subproceso_id: subprocesoId, texto, orden });
+    const { error } = await sb.from('preguntas').insert({ subproceso_id: subprocesoId, tema_id: temaIdDeSubproceso, texto, orden });
+    if (error) { alert('No se pudo guardar la pregunta: ' + error.message); return; }
     await cargarTemas();
   }
   async function borrarPregunta(preguntaId) {
-    await sb.from('preguntas').delete().eq('id', preguntaId);
+    const { error } = await sb.from('preguntas').delete().eq('id', preguntaId);
+    if (error) { alert('No se pudo borrar: ' + error.message); return; }
+    await cargarTemas();
+  }
+  async function borrarTema(temaId) {
+    if (!confirm('¿Borrar este tema? Se van a borrar también todos sus subprocesos y preguntas.')) return;
+    const { error } = await sb.from('temas').delete().eq('id', temaId);
+    if (error) { alert('No se pudo borrar: ' + error.message); return; }
+    temaActivoId = null; subprocesoActivoId = null;
+    await cargarTemas();
+  }
+  async function borrarSubproceso(subprocesoId) {
+    if (!confirm('¿Borrar este subproceso? Se van a borrar también sus preguntas.')) return;
+    const { error } = await sb.from('subprocesos').delete().eq('id', subprocesoId);
+    if (error) { alert('No se pudo borrar: ' + error.message); return; }
+    subprocesoActivoId = null;
     await cargarTemas();
   }
 
