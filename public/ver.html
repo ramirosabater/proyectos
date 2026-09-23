@@ -24,12 +24,14 @@
   .propuesta-output ul { margin: 0.3rem 0 0.8rem; padding-left: 1.2rem; }
   .propuesta-output li { margin: 0.2rem 0; }
   .gantt-wrap { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); padding: 1rem 1.1rem; margin: 0.5rem 0 1rem; overflow-x: auto; }
-  .gantt-chart { min-width: 420px; }
-  .gantt-row { display: grid; grid-template-columns: 150px 1fr; gap: 0.6rem; align-items: center; padding: 0.3rem 0; }
-  .gantt-row .label { font-size: 0.83rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .gantt-track { position: relative; height: 1.4rem; background: var(--paper-raised); border-radius: 2px; }
-  .gantt-bar { position: absolute; top: 2px; bottom: 2px; border-radius: 2px; font-size: 0.7rem; color: #fff; display: flex; align-items: center; padding: 0 0.4rem; overflow: hidden; white-space: nowrap; }
-  .gantt-scale { display: grid; grid-template-columns: 150px 1fr; gap: 0.6rem; margin-bottom: 0.3rem; }
+  .gantt-chart { min-width: 520px; }
+  .gantt-row { display: grid; grid-template-columns: 200px 1fr; gap: 0.6rem; align-items: center; padding: 0.35rem 0; }
+  .gantt-row .label { font-size: 0.83rem; white-space: normal; line-height: 1.25; }
+  .gantt-track-wrap { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+  .gantt-track { position: relative; height: 1.4rem; background: var(--paper-raised); border-radius: 2px; flex: 1; min-width: 0; }
+  .gantt-bar { position: absolute; top: 2px; bottom: 2px; border-radius: 2px; }
+  .gantt-resp-caption { font-size: 0.72rem; color: var(--ink-soft); white-space: nowrap; flex-shrink: 0; max-width: 42%; overflow: hidden; text-overflow: ellipsis; }
+  .gantt-scale { display: grid; grid-template-columns: 200px 1fr; gap: 0.6rem; margin-bottom: 0.3rem; }
   .gantt-scale .ticks { display: flex; font-size: 0.7rem; color: var(--ink-soft); }
   .gantt-scale .ticks span { flex: 1; border-left: 1px solid var(--line); padding-left: 0.25rem; }
   .gantt-legend { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }
@@ -68,8 +70,11 @@
     tareas.forEach(t => {
       const ini = Math.max(1, t.semana_inicio || 1), fin = Math.max(ini, t.semana_fin || ini);
       const left = ((ini - 1) / maxSemana) * 100, width = ((fin - ini + 1) / maxSemana) * 100;
-      html += `<div class="gantt-row"><div class="label" title="${escapeHtml(t.tarea)}">${escapeHtml(t.tarea)}</div>
-        <div class="gantt-track"><div class="gantt-bar" style="left:${left}%;width:${width}%;background:${colorResponsable(t.responsable)};">${escapeHtml(t.responsable||'')}</div></div></div>`;
+      html += `<div class="gantt-row"><div class="label">${escapeHtml(t.tarea)}</div>
+        <div class="gantt-track-wrap">
+          <div class="gantt-track"><div class="gantt-bar" style="left:${left}%;width:${width}%;background:${colorResponsable(t.responsable)};" title="${escapeHtml(t.responsable||'')}"></div></div>
+          <span class="gantt-resp-caption" title="${escapeHtml(t.responsable||'')}">${escapeHtml(t.responsable||'')}</span>
+        </div></div>`;
     });
     html += `<div class="gantt-legend">${responsablesUnicos.map(r => `<span class="item"><span class="dot" style="background:${colorResponsable(r)}"></span>${escapeHtml(r)}</span>`).join('')}</div>`;
     html += `</div></div>`;
