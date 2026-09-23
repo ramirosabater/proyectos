@@ -616,7 +616,7 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
   "dolor": "string — el dolor en una línea",
   "solucion": "string — la solución propuesta, un párrafo corto",
   "gantt": [
-    {"tarea": "string — nombre de la etapa", "semana_inicio": number, "semana_fin": number, "responsable": "string — a quién le corresponde (rol o nombre; 'Consultor' o 'Cliente' si no hay nombre propio)"}
+    {"tarea": "string — nombre de la etapa", "semana_inicio": number, "semana_fin": number, "responsable": "string — quién la hace"}
   ],
   "inversion": "string — si no se relevó un número, escribí 'a definir', nunca lo inventes",
   "costo_inaccion": "string — un párrafo corto",
@@ -624,7 +624,9 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
   "proximo_paso": "string — un paso concreto"
 }
 
-El gantt tiene que tener entre 3 y 7 etapas, con semana_inicio y semana_fin como números enteros (semana 1, 2, 3...), y cada etapa con un responsable asignado (no lo dejes vacío).`;
+Para el campo "responsable" de cada etapa: si las notas mencionan personas puntuales por nombre (ej. "Laura tiene que revisar X", "Ramiro va a configurar Y", una lista de próximos pasos con nombres asignados), USÁ ESOS NOMBRES REALES — no los agrupes genéricamente como "Cliente" ni "Consultor". Cuando distintas personas del cliente tienen tareas distintas, reflejalo con una etapa por persona/tarea en vez de una sola etapa genérica "Cliente" que las tape a todas. Reservá "Consultor" o "Cliente" (sin nombre) únicamente para cuando las notas de verdad no dan ningún nombre propio.
+
+El gantt tiene que tener entre 3 y 10 etapas (más etapas si hay varias personas con tareas distintas que vale la pena mostrar por separado), con semana_inicio y semana_fin como números enteros (semana 1, 2, 3...), y cada etapa con un responsable asignado (no lo dejes vacío).`;
   }
 
   async function generarPropuesta() {
