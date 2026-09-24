@@ -69,7 +69,7 @@
   .pregunta-add input { flex: 1; min-width: 0; }
   .empty-note { color: var(--ink-soft); font-size: 0.9rem; font-style: italic; padding: 0.6rem 0; }
 
-  input[type="text"], input[type="email"], input[type="password"], textarea, select {
+  input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="tel"], textarea, select {
     font-family: var(--sans); font-size: 0.92rem; color: var(--ink); background: var(--paper-raised);
     border: 1px solid var(--line); border-radius: var(--radius); padding: 0.5rem 0.65rem;
   }
@@ -159,6 +159,79 @@
   .metrica .label { font-size: 0.76rem; color: var(--ink-soft); }
   .seguimiento-banner { border: 1px solid var(--accent-warm); border-radius: var(--radius); background: var(--paper-raised); padding: 0.8rem 1rem; margin-bottom: 1.1rem; font-size: 0.86rem; }
   .seguimiento-banner strong { color: var(--accent-warm); }
+  .seguimiento-banner a { color: var(--ink); }
+
+  /* ---- proyectos: tablero por etapa ---- */
+  .kanban { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(172px, 1fr); gap: 0.8rem; overflow-x: auto; padding-bottom: 0.6rem; margin-bottom: 1.4rem; align-items: start; }
+  .kcol { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.7rem; min-height: 8rem; }
+  .kcol-head { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--serif); font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem; }
+  .kcol-count { font-family: var(--sans); font-weight: 500; font-size: 0.8rem; color: var(--ink-soft); }
+  .kcol-suma { font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 0.3rem; }
+  .kcol-cards { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.5rem; }
+  .kcol-vacia { font-size: 0.82rem; color: var(--ink-soft); font-style: italic; padding: 0.4rem 0.1rem; }
+  .kcard { background: var(--paper-raised); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.65rem 0.7rem 0.45rem; cursor: pointer; }
+  .kcard:hover { border-color: var(--accent); }
+  .kcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .kcard-cliente { font-family: var(--serif); font-weight: 600; font-size: 0.95rem; line-height: 1.25; }
+  .kcard-obj { font-size: 0.84rem; color: var(--ink-soft); margin-top: 0.15rem; }
+  .kcard-meta { font-size: 0.76rem; color: var(--ink-soft); margin-top: 0.2rem; }
+  .kcard-prox { font-size: 0.8rem; margin-top: 0.45rem; padding-left: 0.5rem; border-left: 2px solid var(--line); }
+  .kcard-prox.vencida { border-left-color: var(--accent-warm); color: var(--accent-warm); font-weight: 600; }
+  .kcard-pie { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.76rem; color: var(--ink-soft); margin-top: 0.45rem; }
+  .kcard-mover { display: flex; justify-content: flex-end; gap: 0.3rem; margin-top: 0.3rem; }
+  .kcard-mover button { padding: 0.05rem 0.55rem; font-size: 0.95rem; line-height: 1.3; }
+  .kcard-mover button:disabled { opacity: 0.3; cursor: default; }
+  @media (max-width: 560px) { .kanban { grid-auto-columns: 80%; } }
+  .plegable { margin-bottom: 0.9rem; }
+  .plegable summary { cursor: pointer; font-family: var(--serif); font-weight: 600; padding: 0.4rem 0; }
+
+  /* ---- ventana de proyecto ---- */
+  .modal-fondo { position: fixed; inset: 0; background: rgba(20, 24, 20, 0.45); z-index: 50; display: flex; justify-content: center; align-items: flex-start; padding: 4vh 1rem; overflow-y: auto; }
+  .modal-fondo[hidden] { display: none; }
+  .modal-caja { background: var(--paper-raised); border-radius: var(--radius); width: min(760px, 100%); padding: 1.3rem 1.4rem 1.5rem; box-shadow: 0 12px 40px rgba(0,0,0,0.18); }
+  .modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+  .modal-head h2 { font-family: var(--serif); font-size: 1.3rem; margin: 0; }
+  .modal-head p { margin: 0.25rem 0 0; color: var(--ink-soft); font-size: 0.9rem; }
+  .modal-cerrar { font-size: 1.4rem; line-height: 1; padding: 0.2rem 0.6rem; }
+  .modal-sub { font-size: 0.86rem; color: var(--ink-soft); margin: 0.5rem 0 0; }
+  .modal-sub a, .reunion-item a { color: var(--accent); }
+  .modal-seccion { border-top: 1px solid var(--line); margin-top: 1.1rem; padding-top: 1rem; }
+  .modal-seccion h3 { font-family: var(--serif); font-size: 1.02rem; margin: 0 0 0.7rem; }
+  .modal-seccion .form-row input, .modal-seccion .form-row select, .modal-seccion .form-row textarea { width: 100%; }
+  .modal-final { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .modal-final .pregunta-add { flex: 1; min-width: 260px; }
+  .texto-peligro { color: var(--danger); }
+  .reunion-item { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.6rem 0.75rem; margin-bottom: 0.55rem; }
+  .reunion-item summary { cursor: pointer; font-size: 0.84rem; color: var(--ink-soft); margin: 0.3rem 0; }
+  .reunion-texto { white-space: pre-wrap; font-size: 0.88rem; line-height: 1.5; max-height: 18rem; overflow-y: auto; }
+
+  /* ---- clientes ---- */
+  .cliente-ficha { border-bottom: 1px solid var(--line); background: var(--paper); padding: 1.1rem 1.1rem 1.3rem; }
+  .cliente-ficha h3 { font-family: var(--serif); font-size: 1rem; font-weight: 600; margin: 1.1rem 0 0.5rem; }
+  .cliente-ficha .cliente-grid > div > h3:first-child { margin-top: 0; }
+  .cliente-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; }
+  @media (max-width: 760px) { .cliente-grid { grid-template-columns: 1fr; gap: 0.5rem; } }
+  .cliente-datos { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 0; font-size: 0.9rem; }
+  .cliente-datos dt { color: var(--ink-soft); }
+  .cliente-datos dd { margin: 0; overflow-wrap: anywhere; }
+  .cliente-notas { font-size: 0.9rem; white-space: pre-wrap; margin: 0; }
+  .contacto-item { padding: 0.55rem 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+  .contacto-item:last-child { border-bottom: none; }
+  .contacto-meta { color: var(--ink-soft); font-size: 0.84rem; margin-top: 0.15rem; overflow-wrap: anywhere; }
+  .contacto-links { display: flex; gap: 1rem; margin-top: 0.3rem; font-size: 0.84rem; }
+  .contacto-links:empty { display: none; }
+  .bitacora-form { display: grid; grid-template-columns: auto auto 1fr auto; gap: 0.5rem; margin-bottom: 0.6rem; }
+  @media (max-width: 520px) { .bitacora-form { grid-template-columns: 1fr 1fr; } .bitacora-form #cfDetalle { grid-column: 1 / -1; } }
+  .bitacora-fecha { color: var(--ink-soft); font-size: 0.84rem; }
+  .contacto-links a, .cliente-datos a { color: var(--accent); }
+  .cliente-form .form-row input:not([type="radio"]), .cliente-form .form-row select, .cliente-ficha .form-row input { width: 100%; }
+  .cliente-ficha .propuesta-actions { flex-wrap: wrap; }
+  nav.tabs { overflow-x: auto; scrollbar-width: none; }
+  nav.tabs button { flex-shrink: 0; }
+  .contacto-edit { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+  .contacto-edit input[type="text"], .contacto-edit input[type="email"], .contacto-edit input[type="tel"] { min-width: 0; width: 100%; }
+  @media (max-width: 760px) { .contacto-edit { grid-template-columns: 1fr 1fr; padding-bottom: 0.6rem; border-bottom: 1px solid var(--line); } }
+  .ct-principal { font-size: 0.82rem; color: var(--ink-soft); display: flex; align-items: center; gap: 0.3rem; margin: 0 !important; white-space: nowrap; }
 
   .archivos-list { margin-top: 0.8rem; }
   .archivo-item { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--line); font-size: 0.85rem; }
@@ -201,6 +274,7 @@
 
   <nav class="tabs">
     <button id="tabRelevarBtn" class="active">Relevar</button>
+    <button id="tabClientesBtn">Clientes</button>
     <button id="tabProyectosBtn">Proyectos</button>
     <button id="tabConocimientoBtn">Conocimiento</button>
     <button id="tabTableroBtn">Tablero</button>
@@ -238,9 +312,15 @@
           <select id="temaSelect"><option value="">— elegí un tema —</option></select>
         </div>
       </div>
-      <div class="form-row">
-        <label for="empresaInput">Empresa (opcional — para el saludo formal, ej. "Pepe S.A.")</label>
-        <input type="text" id="empresaInput" placeholder="Ej. Pepe S.A.">
+      <div class="form-row two">
+        <div>
+          <label for="empresaInput">Empresa (para el saludo formal)</label>
+          <input type="text" id="empresaInput" placeholder="Ej. Pepe S.A." style="width:100%;">
+        </div>
+        <div>
+          <label for="proyectoSelect">Proyecto</label>
+          <select id="proyectoSelect" style="width:100%;" disabled><option value="">— sin proyecto —</option></select>
+        </div>
       </div>
 
       <div class="form-row">
@@ -262,13 +342,39 @@
     </section>
   </main>
 
+  <div class="view" id="viewClientes" style="max-width:1160px;margin:0 auto;padding:2rem 1.75rem 4rem;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:1.1rem;">
+      <div>
+        <h2 style="font-family:var(--serif);font-weight:600;font-size:1.2rem;margin:0 0 0.2rem;">Clientes</h2>
+        <p class="hint" style="color:var(--ink-soft);font-size:0.88rem;margin:0;">Ficha, contactos, bitácora y próximo contacto de cada cliente.</p>
+      </div>
+      <button class="primary" id="nuevoClienteBtn">Nuevo cliente</button>
+    </div>
+    <div id="clienteFormWrap" style="margin-bottom:1.1rem;"></div>
+    <div id="clientesAgenda"></div>
+    <input type="text" id="buscarClienteInput" placeholder="Buscar por nombre, razón social, rubro, localidad o contacto..." style="width:100%;margin-bottom:0.8rem;">
+    <div class="temas-list" id="clientesFiltros" style="margin-bottom:1.1rem;"></div>
+    <div class="proyectos-list" id="clientesLista"></div>
+  </div>
+
   <div class="view" id="viewProyectos" style="max-width:1160px;margin:0 auto;padding:2rem 1.75rem 4rem;">
-    <h2 style="font-family:var(--serif);font-weight:600;font-size:1.2rem;margin:0 0 0.2rem;">Proyectos</h2>
-    <p class="hint" style="color:var(--ink-soft);font-size:0.88rem;margin:0 0 1.1rem;">Clientes de Cartera Viva con las propuestas que les generaste, ordenados por actividad más reciente.</p>
-    <input type="text" id="buscarProyectoInput" placeholder="Buscar por nombre..." style="width:100%;margin-bottom:1.1rem;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:1.1rem;">
+      <div>
+        <h2 style="font-family:var(--serif);font-weight:600;font-size:1.2rem;margin:0 0 0.2rem;">Proyectos</h2>
+        <p class="hint" style="color:var(--ink-soft);font-size:0.88rem;margin:0;">Tu cartera por etapa. Tocá un proyecto para ver sus reuniones, propuestas y archivos.</p>
+      </div>
+      <button class="primary" id="nuevoProyectoBtn">Nuevo proyecto</button>
+    </div>
     <div id="metricasWrap"></div>
     <div id="seguimientoWrap"></div>
-    <div class="proyectos-list" id="proyectosList2"></div>
+    <input type="text" id="buscarProyectoInput" placeholder="Buscar por cliente, objetivo, responsable o próxima acción..." style="width:100%;margin-bottom:1rem;">
+    <div class="kanban" id="kanban"></div>
+    <details class="plegable"><summary>Perdidos (<span id="perdidosCount">0</span>)</summary><div id="perdidosList"></div></details>
+    <details class="plegable"><summary>Propuestas sin proyecto (<span id="sueltasCount">0</span>)</summary><div id="sueltasList"></div></details>
+  </div>
+
+  <div class="modal-fondo" id="proyectoModal" hidden>
+    <div class="modal-caja" role="dialog" aria-modal="true" aria-labelledby="mpTitulo" id="proyectoModalBody"></div>
   </div>
 
   <div class="view" id="viewConocimiento" style="max-width:1160px;margin:0 auto;padding:2rem 1.75rem 4rem;">
@@ -346,7 +452,7 @@
   let temas = [];
   let temaActivoId = null;
   let ultimaPropuestaTexto = '';
-  let proyectosCache = []; // [{id, nombre}] de Cartera Viva, para linkear
+  let proyectosCache = []; // proyectos completos (tablero de la pestaña Proyectos)
 
   const loginScreen = document.getElementById('loginScreen');
   const loginForm = document.getElementById('loginForm');
@@ -397,6 +503,7 @@
     appEl.hidden = false;
     await cargarTemas();
     await cargarProyectos();
+    await cargarClientes();
     await cargarHistorial();
     await cargarConfiguracion();
   }
@@ -569,15 +676,38 @@
   nuevoTemaInput.addEventListener('keydown', e => { if (e.key === 'Enter') nuevoTemaBtn.onclick(); });
 
   // ========== PROYECTOS DE CARTERA VIVA (para linkear el cliente) ==========
+  let proyectosError = false;
+  let vinculoPendiente = null; // { proyecto_id, reunion_id } cuando la propuesta sale de una reunión
   async function cargarProyectos() {
-    const { data, error } = await sb.from('proyectos').select('id, nombre, clientes(nombre)');
-    if (error) return; // si la tabla no existe o no hay acceso, seguimos sin autosuggest
-    proyectosCache = (data || []).map(p => ({ id: p.id, nombre: (p.clientes && p.clientes.nombre) || p.nombre }));
-    proyectosList.innerHTML = proyectosCache.map(p => `<option value="${escapeHtml(p.nombre)}">`).join('');
+    const { data, error } = await sb.from('proyectos').select('*');
+    proyectosError = !!error;
+    if (error) return;
+    proyectosCache = data || [];
+    refrescarDatalistClientes();
+    refrescarSelectProyecto();
   }
-  function proyectoIdPorNombre(nombre) {
-    const hit = proyectosCache.find(p => p.nombre.toLowerCase() === nombre.trim().toLowerCase());
-    return hit ? hit.id : null;
+  function proyectoPorId(id) { return proyectosCache.find(p => String(p.id) === String(id)); }
+
+  // Proyectos del cliente escrito en el generador (el vínculo de la propuesta).
+  function proyectosDelClienteEscrito() {
+    const nombre = clienteInput.value.trim().toLowerCase();
+    if (!nombre) return [];
+    const c = clientePorNombre(nombre);
+    return proyectosCache.filter(p => c ? String(p.cliente_id) === String(c.id)
+      : (p.cliente_id == null && (p.nombre || '').trim().toLowerCase() === nombre));
+  }
+  function refrescarSelectProyecto() {
+    const sel = document.getElementById('proyectoSelect');
+    if (!sel) return;
+    const lista = proyectosDelClienteEscrito();
+    const previo = sel.value;
+    sel.innerHTML = '<option value="">— sin proyecto —</option>' + lista.map(p =>
+      `<option value="${escapeHtml(String(p.id))}">${escapeHtml(p.nombre || 'Proyecto sin objetivo')} (${escapeHtml(p.perdido ? 'perdido' : etiquetaEstadoProyecto(p.estado))})</option>`).join('');
+    const activos = lista.filter(p => !p.perdido);
+    if (vinculoPendiente && lista.some(p => String(p.id) === vinculoPendiente.proyecto_id)) sel.value = vinculoPendiente.proyecto_id;
+    else if (lista.some(p => String(p.id) === previo)) sel.value = previo;
+    else if (activos.length === 1) sel.value = String(activos[0].id);
+    sel.disabled = !lista.length;
   }
 
   // ========== GENERADOR DE PROPUESTA (JSON estructurado) ==========
@@ -649,20 +779,32 @@ El gantt tiene que tener entre 3 y 10 etapas (más etapas si hay varias personas
       const parsed = parsearJsonTolerante(texto);
       if (!parsed) throw new Error('invalid_json');
 
-      const { data: inserted, error: insErr } = await sb.from('propuestas').insert({
-        proyecto_id: proyectoIdPorNombre(cliente),
+      const clienteReg = await asegurarCliente(cliente, empresa); // si es nuevo, queda como prospecto
+      const proyectoId = document.getElementById('proyectoSelect').value || null;
+      const reunionId = vinculoPendiente && vinculoPendiente.proyecto_id === proyectoId ? vinculoPendiente.reunion_id : null;
+      const fila = {
+        proyecto_id: proyectoId,
         cliente_texto: cliente || null,
         empresa_texto: empresa || null,
         tema_id: temaId || null,
         notas,
         contenido: JSON.stringify(parsed),
         gantt: parsed.gantt || [],
-      }).select().single();
+      };
+      const extras = {};
+      if (clienteReg) extras.cliente_id = clienteReg.id;
+      if (reunionId) extras.reunion_id = reunionId;
+      let { data: inserted, error: insErr } = await sb.from('propuestas').insert({ ...fila, ...extras }).select().single();
+      if (insErr && Object.keys(extras).length) {
+        // Todavía sin alguna migración: guardar sin esos vínculos.
+        ({ data: inserted, error: insErr } = await sb.from('propuestas').insert(fila).select().single());
+      }
       if (insErr) throw insErr;
+      vinculoPendiente = null;
 
       propuestaActual = {
         id: inserted.id, estado: inserted.estado, empresa_texto: inserted.empresa_texto,
-        cliente_texto: inserted.cliente_texto, tema_id: inserted.tema_id, notas: inserted.notas, analisis: null,
+        cliente_texto: inserted.cliente_texto, cliente_id: inserted.cliente_id ?? null, tema_id: inserted.tema_id, notas: inserted.notas, analisis: null,
         ...parsed,
       };
       mostrarPropuesta(propuestaActual);
@@ -837,7 +979,7 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
       const firma = (configuracionCache && configuracionCache.nombre_negocio) || '';
       const asunto = `Algunas preguntas para completar la propuesta${p.cliente_texto ? ' — ' + p.cliente_texto : ''}`;
       const cuerpo = `Hola, ¿cómo está?\n\nGracias por el tiempo en la reunión. Para terminar de ajustar la propuesta me quedaron algunas preguntas:\n\n${textoPendientes}\n\nCon esto puedo cerrar los números y los plazos. Quedo atento.\n\nSaludos${firma ? ',\n' + firma : ''}`;
-      location.href = `mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+      window.open(linkGmail(mailDeLaPropuesta(p), asunto, cuerpo), '_blank');
     };
     const copiarBtn = document.getElementById('copiarPendientesBtn');
     if (copiarBtn) copiarBtn.onclick = () => navigator.clipboard.writeText(textoPendientes).catch(() => {});
@@ -1041,7 +1183,7 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
         proximo_paso: document.getElementById('edProximoPaso').value.trim(),
       };
       if (p.id) {
-        const { id, gantt, estado, empresa_texto, cliente_texto, tema_id, notas, analisis, analizando, errorAnalisis, ...contenido } = actualizado;
+        const { id, gantt, estado, empresa_texto, cliente_texto, cliente_id, tema_id, notas, analisis, analizando, errorAnalisis, ...contenido } = actualizado;
         await sb.from('propuestas').update({ contenido: JSON.stringify(contenido), empresa_texto }).eq('id', p.id);
       }
       propuestaActual = actualizado;
@@ -1082,6 +1224,14 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
     });
   }
 
+  function clienteDeLaPropuesta(p) {
+    return (p.cliente_id != null && clientePorId(p.cliente_id)) || clientePorNombre(p.cliente_texto) || null;
+  }
+  function mailDeLaPropuesta(p) {
+    const k = contactoPrincipal(clienteDeLaPropuesta(p));
+    return (k && k.email) || '';
+  }
+
   async function abrirPanelCompartir(p) {
     const panel = document.getElementById('compartirPanel');
     if (!p.id) { panel.innerHTML = '<div class="empty-note">Guardá la propuesta primero (generala de nuevo si hace falta).</div>'; return; }
@@ -1098,7 +1248,7 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
         </div>
         <div class="form-row">
           <label for="mailClienteInput">Mail del cliente (opcional, para armar el envío)</label>
-          <input type="text" id="mailClienteInput" placeholder="cliente@empresa.com">
+          <input type="text" id="mailClienteInput" placeholder="cliente@empresa.com" value="${escapeHtml(mailDeLaPropuesta(p))}">
         </div>
         <button class="primary" id="enviarMailBtn">Abrir en Gmail</button>
       </div>`;
@@ -1182,6 +1332,16 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
     render();
   }
 
+  function propuestaDesdeRow(row) {
+    const contenido = typeof row.contenido === 'string' ? parsearJsonTolerante(row.contenido) : row.contenido;
+    if (!contenido) return null;
+    return {
+      ...contenido, id: row.id, estado: row.estado, empresa_texto: row.empresa_texto,
+      cliente_texto: row.cliente_texto, cliente_id: row.cliente_id ?? null, tema_id: row.tema_id,
+      notas: row.notas, analisis: row.analisis || null, gantt: row.gantt || contenido.gantt || [],
+    };
+  }
+
   async function cargarHistorial() {
     const { data, error } = await sb.from('propuestas').select('*').order('creado_at', { ascending: false }).limit(20);
     if (error || !data || !data.length) { historialWrap.hidden = true; return; }
@@ -1194,9 +1354,9 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
       const fecha = row.creado_at ? new Date(row.creado_at).toLocaleDateString('es-AR') : '';
       item.innerHTML = `<span class="cliente">${escapeHtml(row.cliente_texto || '(sin cliente)')}${temaNombre ? `<span class="tag-warm">${escapeHtml(temaNombre)}</span>` : ''}${row.estado === 'aceptada' ? '<span class="tag-warm" style="color:var(--accent);border-color:var(--accent);">✓</span>' : ''}</span><span class="fecha">${fecha}</span>`;
       item.onclick = () => {
-        const contenido = typeof row.contenido === 'string' ? parsearJsonTolerante(row.contenido) : row.contenido;
-        if (!contenido) return;
-        mostrarPropuesta({ ...contenido, id: row.id, estado: row.estado, empresa_texto: row.empresa_texto, cliente_texto: row.cliente_texto, tema_id: row.tema_id, notas: row.notas, analisis: row.analisis || null, gantt: row.gantt || contenido.gantt || [] });
+        const p = propuestaDesdeRow(row);
+        if (!p) return;
+        mostrarPropuesta(p);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
       historialList.appendChild(item);
@@ -1331,6 +1491,8 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
   // ========== TABS ==========
   const tabRelevarBtn = document.getElementById('tabRelevarBtn');
   const tabProyectosBtn = document.getElementById('tabProyectosBtn');
+  const tabClientesBtn = document.getElementById('tabClientesBtn');
+  const viewClientes = document.getElementById('viewClientes');
   const tabConocimientoBtn = document.getElementById('tabConocimientoBtn');
   const tabTableroBtn = document.getElementById('tabTableroBtn');
   const tabAjustesBtn = document.getElementById('tabAjustesBtn');
@@ -1341,6 +1503,7 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
   const viewAjustes = document.getElementById('viewAjustes');
   const todasLasTabs = [
     [tabRelevarBtn, viewRelevar],
+    [tabClientesBtn, viewClientes],
     [tabProyectosBtn, viewProyectos],
     [tabConocimientoBtn, viewConocimiento],
     [tabTableroBtn, viewTablero],
@@ -1351,15 +1514,476 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
     if (onActivar) onActivar();
   }
   tabRelevarBtn.onclick = () => activarTab(tabRelevarBtn, viewRelevar);
+  tabClientesBtn.onclick = () => activarTab(tabClientesBtn, viewClientes, cargarVistaClientes);
   tabProyectosBtn.onclick = () => activarTab(tabProyectosBtn, viewProyectos, cargarVistaProyectos);
   tabConocimientoBtn.onclick = () => activarTab(tabConocimientoBtn, viewConocimiento, cargarVistaConocimiento);
   tabTableroBtn.onclick = () => activarTab(tabTableroBtn, viewTablero, cargarTablero);
   tabAjustesBtn.onclick = () => activarTab(tabAjustesBtn, viewAjustes, cargarVistaAjustes);
 
+  // ========== CLIENTES (ficha, contactos, bitácora, próximo contacto) ==========
+  // Tabla `clientes` de Supabase (compartida con Proyectos).
+  let clientesCache = [];
+  let clientesFiltroEtapa = '';
+  let clientesBusqueda = '';
+  let clientesConteoPropuestas = {};
+  let clienteAbiertoId = null;
+
+  const ETAPAS = [
+    ['prospecto', 'Prospecto'],
+    ['propuesta', 'Con propuesta'],
+    ['cliente', 'Cliente'],
+    ['inactivo', 'Inactivo'],
+  ];
+  const TIPOS_INTERACCION = [
+    ['llamada', 'Llamada'], ['reunion', 'Reunión'], ['mail', 'Mail'], ['whatsapp', 'WhatsApp'], ['nota', 'Nota'],
+  ];
+  const etiquetaEtapa = (e) => (ETAPAS.find(x => x[0] === e) || [null, 'Prospecto'])[1];
+  const etiquetaTipo = (t) => (TIPOS_INTERACCION.find(x => x[0] === t) || [null, 'Nota'])[1];
+  const hoyISO = () => new Date().toISOString().slice(0, 10);
+  const fechaCorta = (iso) => iso ? new Date(iso.length === 10 ? iso + 'T12:00:00' : iso).toLocaleDateString('es-AR') : '';
+
+  async function cargarClientes() {
+    const { data, error } = await sb.from('clientes').select('*').order('nombre');
+    if (error) { clientesCache = []; return false; }
+    clientesCache = (data || []).map(c => ({ ...c, contactos: Array.isArray(c.contactos) ? c.contactos : [] }));
+    refrescarDatalistClientes();
+    return true;
+  }
+
+  function refrescarDatalistClientes() {
+    const nombres = new Set();
+    clientesCache.forEach(c => c.nombre && nombres.add(c.nombre));
+    proyectosCache.forEach(p => p.cliente_id == null && p.nombre && nombres.add(p.nombre));
+    proyectosList.innerHTML = [...nombres].sort((a, b) => a.localeCompare(b, 'es'))
+      .map(n => `<option value="${escapeHtml(n)}">`).join('');
+  }
+
+  function clientePorNombre(nombre) {
+    const n = (nombre || '').trim().toLowerCase();
+    return n ? clientesCache.find(c => (c.nombre || '').trim().toLowerCase() === n) : null;
+  }
+  function clientePorId(id) { return clientesCache.find(c => String(c.id) === String(id)); }
+  function contactoPrincipal(c) {
+    if (!c || !c.contactos.length) return null;
+    return c.contactos.find(x => x.principal) || c.contactos[0];
+  }
+  function linkWhatsapp(tel) {
+    let d = (tel || '').replace(/\D/g, '');
+    if (!d) return '';
+    if (d.startsWith('0')) d = d.slice(1);
+    if (!d.startsWith('54')) d = '549' + d;
+    return 'https://wa.me/' + d;
+  }
+  function linkGmail(to, asunto, cuerpo) {
+    return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to || '')}&su=${encodeURIComponent(asunto || '')}&body=${encodeURIComponent(cuerpo || '')}`;
+  }
+
+  // Busca el cliente por nombre; si no existe, lo da de alta como prospecto.
+  async function asegurarCliente(nombre, razonSocial) {
+    if (!nombre) return null;
+    const existente = clientePorNombre(nombre);
+    if (existente) return existente;
+    const { data, error } = await sb.from('clientes')
+      .insert({ nombre: nombre.trim(), razon_social: razonSocial || null, etapa_comercial: 'prospecto' })
+      .select().single();
+    if (error) return null;
+    const nuevo = { ...data, contactos: Array.isArray(data.contactos) ? data.contactos : [] };
+    clientesCache.push(nuevo);
+    refrescarDatalistClientes();
+    return nuevo;
+  }
+
+  // ---------- vista ----------
+  async function cargarVistaClientes() {
+    const lista = document.getElementById('clientesLista');
+    lista.innerHTML = '<div class="empty-note">Cargando…</div>';
+    const [ok] = await Promise.all([cargarClientes(), cargarProyectos()]);
+    if (!ok) {
+      lista.innerHTML = '<div class="empty-note">No se pudieron cargar los clientes. Corré supabase_migracion_clientes.sql en Supabase y recargá.</div>';
+      return;
+    }
+    clientesConteoPropuestas = {};
+    const { data: props, error } = await sb.from('propuestas').select('cliente_id');
+    if (!error) (props || []).forEach(p => {
+      if (p.cliente_id != null) clientesConteoPropuestas[p.cliente_id] = (clientesConteoPropuestas[p.cliente_id] || 0) + 1;
+    });
+    renderClientesFiltros();
+    renderClientesAgenda();
+    renderClientesLista();
+  }
+
+  function renderClientesFiltros() {
+    const cont = document.getElementById('clientesFiltros');
+    const opciones = [['', 'Todos'], ...ETAPAS];
+    cont.innerHTML = opciones.map(([v, l]) => {
+      const n = v ? clientesCache.filter(c => (c.etapa_comercial || 'prospecto') === v).length : clientesCache.length;
+      return `<button class="tema-chip${clientesFiltroEtapa === v ? ' active' : ''}" data-v="${v}">${l} (${n})</button>`;
+    }).join('');
+    cont.querySelectorAll('button').forEach(b => b.onclick = () => {
+      clientesFiltroEtapa = b.dataset.v; renderClientesFiltros(); renderClientesLista();
+    });
+  }
+
+  function renderClientesAgenda() {
+    const wrap = document.getElementById('clientesAgenda');
+    const hoy = hoyISO();
+    const vencen = clientesCache
+      .filter(c => c.proximo_contacto && c.proximo_contacto <= hoy && c.etapa_comercial !== 'inactivo')
+      .sort((a, b) => a.proximo_contacto.localeCompare(b.proximo_contacto));
+    if (!vencen.length) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `<div class="seguimiento-banner"><strong>Para contactar hoy:</strong>
+      ${vencen.map(c => `<a href="#" class="agenda-cliente" data-id="${escapeHtml(String(c.id))}">${escapeHtml(c.nombre)}</a>${c.proxima_accion ? ' (' + escapeHtml(c.proxima_accion) + ')' : ''}${c.proximo_contacto < hoy ? ' — atrasado desde el ' + fechaCorta(c.proximo_contacto) : ''}`).join(' · ')}
+    </div>`;
+    wrap.querySelectorAll('.agenda-cliente').forEach(a => a.onclick = (ev) => {
+      ev.preventDefault();
+      clientesFiltroEtapa = ''; clientesBusqueda = ''; document.getElementById('buscarClienteInput').value = '';
+      clienteAbiertoId = a.dataset.id;
+      renderClientesFiltros(); renderClientesLista();
+    });
+  }
+
+  function renderClientesLista() {
+    const lista = document.getElementById('clientesLista');
+    const hoy = hoyISO();
+    const filas = clientesCache.filter(c => {
+      if (clientesFiltroEtapa && (c.etapa_comercial || 'prospecto') !== clientesFiltroEtapa) return false;
+      if (!clientesBusqueda) return true;
+      const txt = [c.nombre, c.razon_social, c.rubro, c.localidad, c.cuit, ...c.contactos.map(x => x.nombre)].join(' ').toLowerCase();
+      return txt.includes(clientesBusqueda);
+    });
+    if (!clientesCache.length) { lista.innerHTML = '<div class="empty-note" style="padding:1rem 1.1rem;">Todavía no hay clientes. Cargá el primero con "Nuevo cliente".</div>'; return; }
+    if (!filas.length) { lista.innerHTML = '<div class="empty-note" style="padding:1rem 1.1rem;">Ningún cliente coincide con la búsqueda.</div>'; return; }
+
+    lista.innerHTML = filas.map(c => {
+      const n = clientesConteoPropuestas[c.id] || 0;
+      const atrasado = c.proximo_contacto && c.proximo_contacto <= hoy;
+      const detalle = c.proximo_contacto
+        ? `<span${atrasado ? ' style="color:var(--accent-warm);font-weight:600;"' : ''}>contactar el ${fechaCorta(c.proximo_contacto)}</span>`
+        : `${n} propuesta${n === 1 ? '' : 's'}`;
+      return `
+        <div class="proyecto-row" data-id="${escapeHtml(String(c.id))}">
+          <span class="nombre">${escapeHtml(c.nombre || '(sin nombre)')}${c.rubro ? `<span style="font-family:var(--sans);font-weight:400;font-size:0.82rem;color:var(--ink-soft);"> · ${escapeHtml(c.rubro)}</span>` : ''}</span>
+          <span class="estado">${etiquetaEtapa(c.etapa_comercial)}</span>
+          <span class="cantidad">${detalle}</span>
+        </div>
+        <div class="proyecto-detalle-slot" data-id="${escapeHtml(String(c.id))}"></div>`;
+    }).join('');
+
+    lista.querySelectorAll('.proyecto-row').forEach(row => row.onclick = () => {
+      clienteAbiertoId = clienteAbiertoId === row.dataset.id ? null : row.dataset.id;
+      renderClientesLista();
+    });
+    if (clienteAbiertoId) {
+      const slot = lista.querySelector(`.proyecto-detalle-slot[data-id="${CSS.escape(String(clienteAbiertoId))}"]`);
+      const c = clientePorId(clienteAbiertoId);
+      if (slot && c) { renderClienteDetalle(slot, c); slot.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+    }
+  }
+
+  // ---------- ficha ----------
+  function renderClienteDetalle(slot, c) {
+    const datos = [
+      ['Razón social', c.razon_social], ['CUIT', c.cuit], ['Rubro', c.rubro], ['Localidad', c.localidad],
+      ['Dirección', c.direccion], ['Web', c.web], ['Cómo llegó', c.origen],
+    ].filter(([, v]) => v);
+    const principal = contactoPrincipal(c);
+
+    slot.innerHTML = `
+      <div class="cliente-ficha">
+        <div class="propuesta-actions" style="margin:0 0 1rem;">
+          <button class="primary" id="cfNuevaPropuesta">Nueva propuesta</button>
+          <button id="cfEditar">Editar datos</button>
+          <select id="cfEtapa" aria-label="Etapa comercial">${ETAPAS.map(([v, l]) => `<option value="${v}"${(c.etapa_comercial || 'prospecto') === v ? ' selected' : ''}>${l}</option>`).join('')}</select>
+          <button id="cfBorrar" style="margin-left:auto;">Borrar cliente</button>
+        </div>
+
+        <div class="cliente-grid">
+          <div>
+            <h3>Datos</h3>
+            ${datos.length
+              ? `<dl class="cliente-datos">${datos.map(([k, v]) => `<dt>${k}</dt><dd>${k === 'Web' ? `<a href="${escapeHtml(/^https?:/i.test(v) ? v : 'https://' + v)}" target="_blank" rel="noopener">${escapeHtml(v)}</a>` : escapeHtml(v)}</dd>`).join('')}</dl>`
+              : '<div class="empty-note">Sin datos cargados. Completalos con "Editar datos".</div>'}
+            ${c.notas_internas ? `<h3>Notas internas</h3><p class="cliente-notas">${escapeHtml(c.notas_internas)}</p>` : ''}
+
+            <h3>Contactos</h3>
+            ${c.contactos.length ? c.contactos.map(k => `
+              <div class="contacto-item">
+                <div><strong>${escapeHtml(k.nombre || '(sin nombre)')}</strong>${k.cargo ? ' — ' + escapeHtml(k.cargo) : ''}${k.principal ? ' <span class="tag-warm">principal</span>' : ''}</div>
+                <div class="contacto-meta">${[k.email, k.telefono].filter(Boolean).map(escapeHtml).join(' · ') || 'Sin mail ni teléfono'}</div>
+                <div class="contacto-links">
+                  ${k.email ? `<a href="${linkGmail(k.email, '', '')}" target="_blank" rel="noopener">Escribir mail</a>` : ''}
+                  ${k.telefono ? `<a href="tel:${escapeHtml(k.telefono.replace(/[^\d+]/g, ''))}">Llamar</a><a href="${linkWhatsapp(k.telefono)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+                </div>
+              </div>`).join('') : '<div class="empty-note">Sin contactos. Sumalos con "Editar datos".</div>'}
+          </div>
+
+          <div>
+            <h3>Próximo contacto</h3>
+            <div class="form-row two" style="margin-bottom:0.5rem;">
+              <div><label for="cfProxFecha">Fecha</label><input type="date" id="cfProxFecha" value="${escapeHtml(c.proximo_contacto || '')}"></div>
+              <div><label for="cfProxAccion">Para qué</label><input type="text" id="cfProxAccion" value="${escapeHtml(c.proxima_accion || '')}" placeholder="Ej. Ver si leyó la propuesta"></div>
+            </div>
+            <div class="propuesta-actions" style="margin:0 0 1.2rem;">
+              <button id="cfProxGuardar">Guardar recordatorio</button>
+              ${c.proximo_contacto ? '<button id="cfProxBorrar">Quitar</button>' : ''}
+            </div>
+
+            <h3>Bitácora</h3>
+            <div class="bitacora-form">
+              <select id="cfTipo" aria-label="Tipo">${TIPOS_INTERACCION.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>
+              <input type="date" id="cfFecha" value="${hoyISO()}" aria-label="Fecha">
+              <input type="text" id="cfDetalle" placeholder="Qué pasó o qué se habló">
+              <button id="cfRegistrar">Registrar</button>
+            </div>
+            <div id="cfBitacora"><div class="empty-note">Cargando…</div></div>
+
+            <h3>Proyectos</h3>
+            <div id="cfProyectos"></div>
+            <h3>Propuestas</h3>
+            <div id="cfPropuestas"><div class="empty-note">Cargando…</div></div>
+          </div>
+        </div>
+      </div>`;
+
+    slot.querySelector('#cfNuevaPropuesta').onclick = () => {
+      clienteInput.value = c.nombre || '';
+      document.getElementById('empresaInput').value = c.razon_social || '';
+      activarTab(tabRelevarBtn, viewRelevar);
+      notasInput.focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    slot.querySelector('#cfEditar').onclick = () => renderClienteForm(slot, c);
+    slot.querySelector('#cfEtapa').onchange = async (ev) => {
+      const { error } = await sb.from('clientes').update({ etapa_comercial: ev.target.value }).eq('id', c.id);
+      if (error) { alert('No se pudo cambiar la etapa.'); return; }
+      c.etapa_comercial = ev.target.value;
+      renderClientesFiltros(); renderClientesLista();
+    };
+    slot.querySelector('#cfBorrar').onclick = async () => {
+      if (!confirm(`¿Borrar a ${c.nombre}? Se borra junto con su bitácora. Sus propuestas quedan, pero sin cliente asignado.`)) return;
+      const { error } = await sb.from('clientes').delete().eq('id', c.id);
+      if (error) { alert('No se pudo borrar: seguramente tiene proyectos cargados. Pasalo a "Inactivo" en vez de borrarlo.'); return; }
+      clientesCache = clientesCache.filter(x => x.id !== c.id);
+      clienteAbiertoId = null;
+      refrescarDatalistClientes(); renderClientesFiltros(); renderClientesAgenda(); renderClientesLista();
+    };
+
+    const guardarProximo = async (fecha, accion) => {
+      const { error } = await sb.from('clientes').update({ proximo_contacto: fecha, proxima_accion: accion }).eq('id', c.id);
+      if (error) { alert('No se pudo guardar el recordatorio.'); return; }
+      c.proximo_contacto = fecha; c.proxima_accion = accion;
+      renderClientesAgenda(); renderClientesLista();
+    };
+    slot.querySelector('#cfProxGuardar').onclick = () => {
+      const fecha = slot.querySelector('#cfProxFecha').value || null;
+      if (!fecha) { slot.querySelector('#cfProxFecha').focus(); return; }
+      guardarProximo(fecha, slot.querySelector('#cfProxAccion').value.trim() || null);
+    };
+    const quitar = slot.querySelector('#cfProxBorrar');
+    if (quitar) quitar.onclick = () => guardarProximo(null, null);
+
+    slot.querySelector('#cfRegistrar').onclick = async () => {
+      const detalleEl = slot.querySelector('#cfDetalle');
+      const detalle = detalleEl.value.trim();
+      if (!detalle) { detalleEl.focus(); return; }
+      const { error } = await sb.from('cliente_interacciones').insert({
+        cliente_id: c.id, tipo: slot.querySelector('#cfTipo').value,
+        fecha: slot.querySelector('#cfFecha').value || hoyISO(), detalle,
+      });
+      if (error) { alert('No se pudo registrar (¿corriste supabase_migracion_clientes.sql?).'); return; }
+      detalleEl.value = '';
+      cargarBitacora(slot, c);
+    };
+    slot.querySelector('#cfDetalle').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') slot.querySelector('#cfRegistrar').click(); });
+
+    cargarBitacora(slot, c);
+    cargarPropuestasCliente(slot, c);
+    renderProyectosCliente(slot, c);
+  }
+
+  function renderProyectosCliente(slot, c) {
+    const cont = slot.querySelector('#cfProyectos');
+    const lista = proyectosCache.filter(p => String(p.cliente_id) === String(c.id));
+    cont.innerHTML = (lista.length
+      ? lista.map(p => `<div class="historial-item" data-id="${escapeHtml(String(p.id))}"><span class="cliente">${escapeHtml(p.nombre || 'Proyecto sin objetivo')}<span class="tag-warm">${escapeHtml(p.perdido ? 'Perdido' : etiquetaEstadoProyecto(p.estado))}</span></span><span class="fecha">${p.proxima_fecha ? fechaCorta(p.proxima_fecha) : ''}</span></div>`).join('')
+      : '<div class="empty-note">Sin proyectos todavía.</div>')
+      + '<div class="contacto-links"><a href="#" id="cfNuevoProyecto">Nuevo proyecto para este cliente</a></div>';
+    cont.querySelectorAll('.historial-item').forEach(el => el.onclick = () => abrirProyectoDesdeAfuera(el.dataset.id));
+    cont.querySelector('#cfNuevoProyecto').onclick = async (ev) => {
+      ev.preventDefault();
+      activarTab(tabProyectosBtn, viewProyectos);
+      await cargarVistaProyectos();
+      abrirNuevoProyecto(String(c.id));
+    };
+  }
+
+  async function cargarBitacora(slot, c) {
+    const cont = slot.querySelector('#cfBitacora');
+    const { data, error } = await sb.from('cliente_interacciones').select('*').eq('cliente_id', c.id)
+      .order('fecha', { ascending: false }).order('creado_at', { ascending: false }).limit(50);
+    if (error) { cont.innerHTML = '<div class="empty-note">No se pudo cargar la bitácora.</div>'; return; }
+    if (!data.length) { cont.innerHTML = '<div class="empty-note">Sin interacciones registradas.</div>'; return; }
+    cont.innerHTML = data.map(i => `
+      <div class="archivo-item" data-id="${i.id}">
+        <span><span class="bitacora-fecha">${fechaCorta(i.fecha)}</span> <span class="tag-warm" style="margin-left:0;">${etiquetaTipo(i.tipo)}</span> ${escapeHtml(i.detalle)}</span>
+        <span><a href="#" class="borrar-interaccion">Borrar</a></span>
+      </div>`).join('');
+    cont.querySelectorAll('.borrar-interaccion').forEach(a => a.onclick = async (ev) => {
+      ev.preventDefault();
+      await sb.from('cliente_interacciones').delete().eq('id', a.closest('.archivo-item').dataset.id);
+      cargarBitacora(slot, c);
+    });
+  }
+
+  async function cargarPropuestasCliente(slot, c) {
+    const cont = slot.querySelector('#cfPropuestas');
+    let { data, error } = await sb.from('propuestas').select('*').eq('cliente_id', c.id).order('creado_at', { ascending: false });
+    if (error) {
+      // Sin la migración todavía: buscar por el nombre escrito en la propuesta.
+      ({ data, error } = await sb.from('propuestas').select('*').ilike('cliente_texto', c.nombre).order('creado_at', { ascending: false }));
+    }
+    if (error) { cont.innerHTML = '<div class="empty-note">No se pudieron cargar las propuestas.</div>'; return; }
+    if (!data.length) { cont.innerHTML = '<div class="empty-note">Todavía no le generaste propuestas.</div>'; return; }
+    cont.innerHTML = data.map((row, i) => {
+      const temaNombre = (temas.find(t => t.id === row.tema_id) || {}).nombre;
+      return `<div class="historial-item" data-i="${i}">
+        <span class="cliente">${temaNombre ? escapeHtml(temaNombre) : 'Sin tema'}${row.estado === 'aceptada' ? '<span class="tag-warm" style="color:var(--accent);border-color:var(--accent);">✓ aceptada</span>' : ''}</span>
+        <span class="fecha">${fechaCorta(row.creado_at)}</span>
+      </div>`;
+    }).join('');
+    cont.querySelectorAll('.historial-item').forEach(el => el.onclick = () => {
+      const p = propuestaDesdeRow(data[+el.dataset.i]);
+      if (!p) return;
+      activarTab(tabRelevarBtn, viewRelevar);
+      mostrarPropuesta(p);
+      outputWrap.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+
+  // ---------- alta / edición ----------
+  function filaContactoHTML(k, i) {
+    return `<div class="contacto-edit" data-i="${i}">
+      <input type="text" class="ctNombre" placeholder="Nombre" value="${escapeHtml(k.nombre || '')}">
+      <input type="text" class="ctCargo" placeholder="Cargo (ej. Dueño, Administración)" value="${escapeHtml(k.cargo || '')}">
+      <input type="email" class="ctEmail" placeholder="Mail" value="${escapeHtml(k.email || '')}">
+      <input type="tel" class="ctTel" placeholder="Teléfono (ej. 2804 123456)" value="${escapeHtml(k.telefono || '')}">
+      <label class="ct-principal"><input type="radio" name="ctPrincipal" value="${i}"${k.principal ? ' checked' : ''}> Principal</label>
+      <button type="button" class="ctQuitar" aria-label="Quitar contacto">Quitar</button>
+    </div>`;
+  }
+
+  function renderClienteForm(container, c) {
+    const esNuevo = !c;
+    const d = c || { contactos: [{ principal: true }] };
+    const origenes = ['Referido', 'LinkedIn', 'Contacto frío', 'Evento / diplomatura', 'Web', 'Otro'];
+    container.innerHTML = `
+      <div class="preguntas-panel cliente-form">
+        <div class="titulo-tema">${esNuevo ? 'Nuevo cliente' : 'Editar ' + escapeHtml(c.nombre)}</div>
+        <div class="form-row two">
+          <div><label for="cfNombre">Nombre (como lo llamás)</label><input type="text" id="cfNombre" value="${escapeHtml(d.nombre || '')}" placeholder="Ej. Metalúrgica Andina"></div>
+          <div><label for="cfRazon">Razón social</label><input type="text" id="cfRazon" value="${escapeHtml(d.razon_social || '')}" placeholder="Ej. Metalúrgica Andina S.R.L."></div>
+        </div>
+        <div class="form-row two">
+          <div><label for="cfCuit">CUIT</label><input type="text" id="cfCuit" value="${escapeHtml(d.cuit || '')}" placeholder="30-12345678-9"></div>
+          <div><label for="cfRubro">Rubro</label><input type="text" id="cfRubro" value="${escapeHtml(d.rubro || '')}" placeholder="Ej. Metalmecánica"></div>
+        </div>
+        <div class="form-row two">
+          <div><label for="cfLocalidad">Localidad</label><input type="text" id="cfLocalidad" value="${escapeHtml(d.localidad || '')}" placeholder="Ej. Trelew, Chubut"></div>
+          <div><label for="cfDireccion">Dirección</label><input type="text" id="cfDireccion" value="${escapeHtml(d.direccion || '')}"></div>
+        </div>
+        <div class="form-row two">
+          <div><label for="cfWeb">Web</label><input type="text" id="cfWeb" value="${escapeHtml(d.web || '')}" placeholder="empresa.com.ar"></div>
+          <div><label for="cfOrigen">Cómo llegó</label><input type="text" id="cfOrigen" list="origenesList" value="${escapeHtml(d.origen || '')}" placeholder="Ej. Referido por Juan Pérez">
+            <datalist id="origenesList">${origenes.map(o => `<option value="${o}">`).join('')}</datalist></div>
+        </div>
+        ${esNuevo ? `<div class="form-row"><label for="cfEtapaNueva">Etapa</label><select id="cfEtapaNueva">${ETAPAS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></div>` : ''}
+        <div class="form-row"><label>Contactos</label>
+          <div id="cfContactos">${d.contactos.map(filaContactoHTML).join('')}</div>
+          <button type="button" id="cfAgregarContacto">Agregar contacto</button>
+        </div>
+        <div class="form-row"><label for="cfNotas">Notas internas (solo las ves vos)</label><textarea id="cfNotas" rows="3">${escapeHtml(d.notas_internas || '')}</textarea></div>
+        <div class="propuesta-actions" style="margin:0;">
+          <button class="primary" id="cfGuardar">${esNuevo ? 'Crear cliente' : 'Guardar cambios'}</button>
+          <button id="cfCancelar">Cancelar</button>
+        </div>
+      </div>`;
+
+    const contCont = container.querySelector('#cfContactos');
+    const leerContactos = () => [...contCont.querySelectorAll('.contacto-edit')].map(row => ({
+      nombre: row.querySelector('.ctNombre').value.trim(),
+      cargo: row.querySelector('.ctCargo').value.trim(),
+      email: row.querySelector('.ctEmail').value.trim(),
+      telefono: row.querySelector('.ctTel').value.trim(),
+      principal: row.querySelector('input[name="ctPrincipal"]').checked,
+    }));
+    const redibujarContactos = (lista) => {
+      contCont.innerHTML = lista.map(filaContactoHTML).join('') || '<div class="empty-note">Sin contactos.</div>';
+      contCont.querySelectorAll('.ctQuitar').forEach(b => b.onclick = () => {
+        const lista2 = leerContactos(); lista2.splice(+b.closest('.contacto-edit').dataset.i, 1); redibujarContactos(lista2);
+      });
+    };
+    redibujarContactos(d.contactos);
+    container.querySelector('#cfAgregarContacto').onclick = () => {
+      const lista = leerContactos(); lista.push({ principal: !lista.length }); redibujarContactos(lista);
+    };
+
+    container.querySelector('#cfCancelar').onclick = () => {
+      if (esNuevo) container.innerHTML = ''; else renderClientesLista();
+    };
+    container.querySelector('#cfGuardar').onclick = async () => {
+      const nombreEl = container.querySelector('#cfNombre');
+      const nombre = nombreEl.value.trim();
+      if (!nombre) { nombreEl.focus(); return; }
+      const repetido = clientePorNombre(nombre);
+      if (repetido && (esNuevo || repetido.id !== c.id)) { alert(`Ya hay un cliente llamado "${repetido.nombre}".`); nombreEl.focus(); return; }
+      let contactos = leerContactos().filter(k => k.nombre || k.email || k.telefono);
+      if (contactos.length && !contactos.some(k => k.principal)) contactos[0].principal = true;
+      const val = (id) => container.querySelector(id).value.trim() || null;
+      const registro = {
+        nombre, razon_social: val('#cfRazon'), cuit: val('#cfCuit'), rubro: val('#cfRubro'),
+        localidad: val('#cfLocalidad'), direccion: val('#cfDireccion'), web: val('#cfWeb'),
+        origen: val('#cfOrigen'), notas_internas: val('#cfNotas'), contactos,
+      };
+      if (esNuevo) registro.etapa_comercial = container.querySelector('#cfEtapaNueva').value;
+
+      const btn = container.querySelector('#cfGuardar'); btn.disabled = true;
+      const q = esNuevo
+        ? sb.from('clientes').insert(registro).select().single()
+        : sb.from('clientes').update(registro).eq('id', c.id).select().single();
+      const { data, error } = await q;
+      btn.disabled = false;
+      if (error) { alert('No se pudo guardar: ' + error.message + '\n\n¿Corriste supabase_migracion_clientes.sql?'); return; }
+
+      const guardado = { ...data, contactos: Array.isArray(data.contactos) ? data.contactos : [] };
+      if (esNuevo) { clientesCache.push(guardado); container.innerHTML = ''; }
+      else Object.assign(c, guardado);
+      clientesCache.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+      clienteAbiertoId = String(guardado.id);
+      refrescarDatalistClientes(); renderClientesFiltros(); renderClientesAgenda(); renderClientesLista();
+    };
+    container.querySelector('#cfNombre').focus();
+  }
+
+  document.getElementById('nuevoClienteBtn').onclick = () => {
+    renderClienteForm(document.getElementById('clienteFormWrap'), null);
+  };
+  document.getElementById('buscarClienteInput').addEventListener('input', (ev) => {
+    clientesBusqueda = ev.target.value.trim().toLowerCase();
+    renderClientesLista();
+  });
+
+  // Al elegir un cliente conocido en el generador, completar la razón social.
+  clienteInput.addEventListener('input', () => refrescarSelectProyecto());
+  clienteInput.addEventListener('change', () => {
+    const c = clientePorNombre(clienteInput.value);
+    const empresaEl = document.getElementById('empresaInput');
+    if (c && c.razon_social && !empresaEl.value.trim()) empresaEl.value = c.razon_social;
+  });
+
   // ========== TABLERO DE CONTROL ==========
   async function cargarTablero() {
     document.getElementById('tableroMetricas').innerHTML = '<div class="empty-note">Cargando…</div>';
-    const { data: proyectosData } = await sb.from('proyectos').select('id, nombre, estado, clientes(nombre)');
+    const { data: proyectosData } = await sb.from('proyectos').select('*');
     const { data: propuestasData } = await sb.from('propuestas').select('*').order('creado_at', { ascending: false });
     const { data: pagosData, error: ePagos } = await sb.from('pagos').select('*, propuestas(cliente_texto, proyecto_id)');
 
@@ -1398,7 +2022,7 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
     });
 
     const filas = (proyectosData || []).map(pr => ({
-      id: pr.id, nombre: (pr.clientes && pr.clientes.nombre) || pr.nombre, estado: pr.estado,
+      id: pr.id, nombre: tituloProyecto(pr), estado: pr.perdido ? 'perdido' : etiquetaEstadoProyecto(pr.estado),
       pagos: pagosPorProyecto[pr.id] || [], propuestas: propuestasPorProyecto[pr.id] || [],
     }));
     Object.keys(propuestasPorProyecto).forEach(key => {
@@ -1477,192 +2101,469 @@ Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fence
     setTimeout(() => { ajGuardadoMsg.textContent = ''; }, 2500);
   };
 
-  // ========== VISTA PROYECTOS ==========
-  const proyectosList2 = document.getElementById('proyectosList2');
+  // ========== VISTA PROYECTOS (Cartera Viva integrada) ==========
+  const ESTADOS_PROYECTO = [
+    ['contacto_inicial', 'Contacto inicial'],
+    ['relevamiento_agendado', 'Relevamiento agendado'],
+    ['relevamiento_hecho', 'Relevamiento hecho'],
+    ['propuesta_enviada', 'Propuesta enviada'],
+    ['en_desarrollo', 'En desarrollo'],
+    ['ganado', 'Ganado'],
+  ];
+  const TIPOS_REUNION = ['Relevamiento', 'Seguimiento', 'Presentación de propuesta', 'Kickoff', 'Otra'];
+  const etiquetaEstadoProyecto = (e) => (ESTADOS_PROYECTO.find(x => x[0] === e) || [null, e || 'Sin etapa'])[1];
+  const estadoEnTablero = (e) => ESTADOS_PROYECTO.some(x => x[0] === e) ? e : 'contacto_inicial';
+
   const buscarProyectoInput = document.getElementById('buscarProyectoInput');
-  let proyectosFilasCache = [];
+  const modalProyecto = document.getElementById('proyectoModal');
+  const modalProyectoBody = document.getElementById('proyectoModalBody');
   let proyectosBusqueda = '';
+  let propuestasPorProyecto = {};
+  let reunionesPorProyecto = {};
+  let propuestasSueltas = [];
+  let proyectoAbiertoId = null;
+
+  function fmtMonto(v, moneda) {
+    if (v == null || v === '' || isNaN(Number(v))) return '';
+    return (moneda === 'USD' ? 'US$ ' : '$ ') + Math.round(Number(v)).toLocaleString('es-AR');
+  }
+  function sumarPorMoneda(lista) {
+    const tot = {};
+    lista.forEach(p => { if (p.valor_estimado != null && !isNaN(Number(p.valor_estimado))) tot[p.moneda || 'ARS'] = (tot[p.moneda || 'ARS'] || 0) + Number(p.valor_estimado); });
+    return Object.entries(tot).map(([m, v]) => fmtMonto(v, m)).join(' + ');
+  }
+  function clienteDeProyecto(pr) { return pr && pr.cliente_id != null ? clientePorId(pr.cliente_id) : null; }
+  function nombreClienteProyecto(pr) {
+    const c = clienteDeProyecto(pr);
+    return c ? c.nombre : (pr.cliente_id == null ? (pr.nombre || '(sin cliente)') : '(cliente borrado)');
+  }
+  function tituloProyecto(pr) {
+    const c = clienteDeProyecto(pr);
+    return c ? `${c.nombre}${pr.nombre ? ' — ' + pr.nombre : ''}` : (pr.nombre || '(sin nombre)');
+  }
+  function proyectoActivo(pr) { return !pr.perdido && pr.estado !== 'ganado'; }
+  function ultimaActividad(pr) {
+    const fechas = [pr.actualizado_at, pr.creado_at,
+      ...(reunionesPorProyecto[pr.id] || []).map(r => r.fecha),
+      ...(propuestasPorProyecto[pr.id] || []).map(p => p.creado_at)].filter(Boolean).map(f => new Date(f).getTime());
+    return fechas.length ? Math.max(...fechas) : null;
+  }
 
   buscarProyectoInput.addEventListener('input', () => {
     proyectosBusqueda = buscarProyectoInput.value.trim().toLowerCase();
-    renderProyectosList();
+    renderKanban();
   });
+  document.getElementById('nuevoProyectoBtn').onclick = () => abrirNuevoProyecto();
 
   async function cargarVistaProyectos() {
-    proyectosList2.innerHTML = '<div class="empty-note">Cargando…</div>';
-    const { data: proyectosData, error: e1 } = await sb.from('proyectos').select('id, nombre, estado, clientes(nombre)');
-    const { data: propuestasData } = await sb.from('propuestas').select('*').order('creado_at', { ascending: false });
-    if (e1) { proyectosList2.innerHTML = '<div class="empty-note">No se pudo cargar la lista de proyectos de Cartera Viva.</div>'; return; }
-
-    const porProyecto = {};
-    (propuestasData || []).forEach(p => {
-      const key = p.proyecto_id || ('libre:' + (p.cliente_texto || ''));
-      (porProyecto[key] = porProyecto[key] || []).push(p);
+    document.getElementById('kanban').innerHTML = '<div class="empty-note">Cargando…</div>';
+    await Promise.all([cargarClientes(), cargarProyectos()]);
+    if (proyectosError) {
+      document.getElementById('kanban').innerHTML = '<div class="empty-note">No se pudieron cargar los proyectos. Corré supabase_migracion_cartera.sql en Supabase y recargá.</div>';
+      return;
+    }
+    const [{ data: props }, { data: reus }] = await Promise.all([
+      sb.from('propuestas').select('*').order('creado_at', { ascending: false }),
+      sb.from('proyecto_reuniones').select('id, proyecto_id, fecha'),
+    ]);
+    propuestasPorProyecto = {}; propuestasSueltas = [];
+    (props || []).forEach(p => {
+      if (p.proyecto_id != null && proyectosCache.some(pr => pr.id === p.proyecto_id)) (propuestasPorProyecto[p.proyecto_id] = propuestasPorProyecto[p.proyecto_id] || []).push(p);
+      else propuestasSueltas.push(p);
     });
+    reunionesPorProyecto = {};
+    (reus || []).forEach(r => (reunionesPorProyecto[r.proyecto_id] = reunionesPorProyecto[r.proyecto_id] || []).push(r));
 
-    const filas = (proyectosData || []).map(pr => ({
-      id: pr.id,
-      esProyectoReal: true,
-      nombre: (pr.clientes && pr.clientes.nombre) || pr.nombre,
-      estado: pr.estado,
-      propuestas: porProyecto[pr.id] || [],
-    }));
-
-    Object.keys(porProyecto).forEach(key => {
-      if (key.startsWith('libre:') && key !== 'libre:') {
-        filas.push({ id: key, esProyectoReal: false, nombre: key.slice(6), estado: 'sin vincular', propuestas: porProyecto[key] });
-      }
-    });
-
-    filas.forEach(f => {
-      f.ultimaFecha = f.propuestas.length ? f.propuestas[0].creado_at : null; // ya vienen ordenadas desc
-    });
-    filas.sort((a, b) => {
-      if (!a.ultimaFecha && !b.ultimaFecha) return (a.nombre || '').localeCompare(b.nombre || '');
-      if (!a.ultimaFecha) return 1;
-      if (!b.ultimaFecha) return -1;
-      return new Date(b.ultimaFecha) - new Date(a.ultimaFecha);
-    });
-
-    proyectosFilasCache = filas;
-    renderMetricas(propuestasData || []);
-    renderSeguimiento(filas);
-    renderProyectosList();
+    renderMetricasCartera(props || []);
+    renderAvisosCartera();
+    renderKanban();
+    renderPerdidos();
+    renderSueltas();
   }
 
-  function renderMetricas(propuestasData) {
+  function renderMetricasCartera(propuestasData) {
     const hoy = new Date();
     const esteMes = propuestasData.filter(p => {
       const d = p.creado_at ? new Date(p.creado_at) : null;
       return d && d.getMonth() === hoy.getMonth() && d.getFullYear() === hoy.getFullYear();
     }).length;
-    const aceptadas = propuestasData.filter(p => p.estado === 'aceptada').length;
-    const porTema = {};
-    propuestasData.forEach(p => {
-      const nombre = (temas.find(t => t.id === p.tema_id) || {}).nombre || 'sin tema';
-      porTema[nombre] = (porTema[nombre] || 0) + 1;
-    });
-    const temaTop = Object.entries(porTema).sort((a, b) => b[1] - a[1])[0];
-
+    const activos = proyectosCache.filter(proyectoActivo);
+    const ganados = proyectosCache.filter(p => !p.perdido && p.estado === 'ganado').length;
+    const enJuego = sumarPorMoneda(activos);
     document.getElementById('metricasWrap').innerHTML = `
       <div class="metricas-bar">
+        <div class="metrica"><div class="num">${activos.length}</div><div class="label">proyectos activos</div></div>
+        <div class="metrica"><div class="num">${enJuego || '—'}</div><div class="label">valor en juego</div></div>
+        <div class="metrica"><div class="num">${ganados}</div><div class="label">ganados</div></div>
         <div class="metrica"><div class="num">${esteMes}</div><div class="label">propuestas este mes</div></div>
-        <div class="metrica"><div class="num">${aceptadas}</div><div class="label">aceptadas (total)</div></div>
-        <div class="metrica"><div class="num">${propuestasData.length}</div><div class="label">propuestas totales</div></div>
-        ${temaTop ? `<div class="metrica"><div class="num">${escapeHtml(temaTop[0])}</div><div class="label">tema más frecuente (${temaTop[1]})</div></div>` : ''}
       </div>`;
   }
 
-  function renderSeguimiento(filas) {
-    const QUINCE_DIAS = 15 * 24 * 60 * 60 * 1000;
-    const ahora = Date.now();
-    const estancados = filas.filter(f => f.ultimaFecha && (ahora - new Date(f.ultimaFecha).getTime()) > QUINCE_DIAS);
+  function renderAvisosCartera() {
+    const hoy = hoyISO();
+    const vencidas = proyectosCache.filter(p => proyectoActivo(p) && p.proxima_fecha && p.proxima_fecha <= hoy)
+      .sort((a, b) => a.proxima_fecha.localeCompare(b.proxima_fecha));
+    const QUINCE = 15 * 24 * 3600 * 1000;
+    const quietos = proyectosCache.filter(p => {
+      if (!proyectoActivo(p) || vencidas.includes(p)) return false;
+      const u = ultimaActividad(p);
+      return u && Date.now() - u > QUINCE;
+    });
+    const link = (p, extra) => `<a href="#" class="aviso-proyecto" data-id="${escapeHtml(String(p.id))}">${escapeHtml(tituloProyecto(p))}</a>${extra || ''}`;
+    let html = '';
+    if (vencidas.length) html += `<div class="seguimiento-banner"><strong>Acciones para hoy:</strong> ${vencidas.map(p => link(p, p.proxima_accion ? ' (' + escapeHtml(p.proxima_accion) + (p.proxima_fecha < hoy ? ', desde el ' + fechaCorta(p.proxima_fecha) : '') + ')' : '')).join(' · ')}</div>`;
+    if (quietos.length) html += `<div class="seguimiento-banner"><strong>Sin movimiento hace más de 15 días:</strong> ${quietos.map(p => link(p)).join(' · ')}</div>`;
     const wrap = document.getElementById('seguimientoWrap');
-    if (!estancados.length) { wrap.innerHTML = ''; return; }
-    wrap.innerHTML = `<div class="seguimiento-banner"><strong>Sin actividad hace más de 15 días:</strong> ${estancados.map(f => escapeHtml(f.nombre)).join(', ')}</div>`;
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.aviso-proyecto').forEach(a => a.onclick = (ev) => { ev.preventDefault(); abrirModalProyecto(a.dataset.id); });
   }
 
-  function renderProyectosList() {
-    const filas = proyectosBusqueda
-      ? proyectosFilasCache.filter(f => (f.nombre || '').toLowerCase().includes(proyectosBusqueda))
-      : proyectosFilasCache;
-
-    if (!proyectosFilasCache.length) { proyectosList2.innerHTML = '<div class="empty-note">Todavía no hay proyectos ni propuestas generadas.</div>'; return; }
-    if (!filas.length) { proyectosList2.innerHTML = '<div class="empty-note">Sin resultados para esa búsqueda.</div>'; return; }
-
-    proyectosList2.innerHTML = filas.map((f, i) => `
-      <div class="proyecto-row" data-i="${i}">
-        <span class="nombre">${escapeHtml(f.nombre || '(sin nombre)')}</span>
-        <span class="estado">${escapeHtml(f.estado || 'sin estado')}</span>
-        <span class="cantidad">${f.ultimaFecha ? new Date(f.ultimaFecha).toLocaleDateString('es-AR') : 'sin actividad'} · ${f.propuestas.length} propuesta${f.propuestas.length === 1 ? '' : 's'}</span>
-      </div>
-      <div class="proyecto-detalle-slot" data-i="${i}"></div>
-    `).join('');
-
-    proyectosList2.querySelectorAll('.proyecto-row').forEach(row => {
-      row.onclick = () => {
-        const i = +row.dataset.i;
-        const slot = proyectosList2.querySelector(`.proyecto-detalle-slot[data-i="${i}"]`);
-        if (slot.dataset.open === '1') { slot.innerHTML = ''; slot.dataset.open = '0'; return; }
-        renderProyectoDetalle(slot, filas[i]);
-        slot.dataset.open = '1';
-      };
-    });
+  function coincideBusqueda(p) {
+    if (!proyectosBusqueda) return true;
+    const c = clienteDeProyecto(p);
+    return [p.nombre, p.responsable, p.proxima_accion, c && c.nombre, c && c.razon_social].join(' ').toLowerCase().includes(proyectosBusqueda);
   }
 
-  function renderProyectoDetalle(slot, f) {
-    const listaPropuestas = f.propuestas.length
-      ? f.propuestas.map(p => {
-          const fecha = p.creado_at ? new Date(p.creado_at).toLocaleDateString('es-AR') : '';
-          return `<div class="historial-item" data-pid="${p.id}"><span class="cliente">${escapeHtml(p.cliente_texto || f.nombre)}</span><span class="fecha">${fecha}</span></div>`;
-        }).join('')
-      : '<span class="empty-note">Sin propuestas generadas todavía para este proyecto.</span>';
-
-    const accionesProyecto = f.esProyectoReal ? `
-      <div style="display:flex;gap:0.5rem;margin-bottom:0.9rem;flex-wrap:wrap;">
-        <button id="editarProyectoBtn">Editar</button>
-        <button id="borrarProyectoBtn">Borrar proyecto</button>
-        <button id="descargarPdfBtn">Descargar PDF</button>
-      </div>
-      <div id="editarProyectoForm"></div>` : `
-      <div style="display:flex;gap:0.5rem;margin-bottom:0.9rem;flex-wrap:wrap;">
-        <button id="descargarPdfBtn">Descargar PDF</button>
-      </div>`;
-
-    slot.innerHTML = `<div class="proyecto-detalle">${accionesProyecto}<div>${listaPropuestas}</div>
-      <div class="preguntas-panel" style="margin-top:0.9rem;">
-        <div class="titulo-tema">Archivos adjuntos</div>
-        <div class="archivos-list" id="archivosList">Cargando…</div>
-        <div class="pregunta-add" style="margin-top:0.7rem;">
-          <input type="file" id="archivoInput">
-          <button id="subirArchivoBtn">Subir</button>
-        </div>
-      </div>
-    </div>`;
-
-    slot.querySelector('#descargarPdfBtn').onclick = (ev) => { ev.stopPropagation(); descargarPdfProyecto(f); };
-    cargarArchivosProyecto(f, slot.querySelector('#archivosList'));
-    slot.querySelector('#subirArchivoBtn').onclick = (ev) => { ev.stopPropagation(); subirArchivoProyecto(f, slot); };
-
-    slot.querySelectorAll('.historial-item').forEach(item => {
-      item.onclick = (ev) => {
-        ev.stopPropagation();
-        const p = f.propuestas.find(x => x.id === item.dataset.pid);
-        const contenido = typeof p.contenido === 'string' ? parsearJsonTolerante(p.contenido) : p.contenido;
-        if (!contenido) return;
-        activarTab(tabRelevarBtn, viewRelevar);
-        mostrarPropuesta({ id: p.id, estado: p.estado, empresa_texto: p.empresa_texto, ...contenido, gantt: p.gantt || contenido.gantt || [] });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      };
-    });
-
-    if (f.esProyectoReal) {
-      const editarBtn = slot.querySelector('#editarProyectoBtn');
-      const borrarBtn = slot.querySelector('#borrarProyectoBtn');
-      editarBtn.onclick = (ev) => {
-        ev.stopPropagation();
-        const form = slot.querySelector('#editarProyectoForm');
-        form.innerHTML = `
-          <div class="form-row two" style="margin:0.8rem 0;">
-            <div><label>Nombre</label><input type="text" id="editNombre" value="${escapeHtml(f.nombre || '')}"></div>
-            <div><label>Estado</label><input type="text" id="editEstado" value="${escapeHtml(f.estado || '')}"></div>
-          </div>
-          <button class="primary" id="guardarEditProyecto">Guardar</button>`;
-        document.getElementById('guardarEditProyecto').onclick = async (ev2) => {
-          ev2.stopPropagation();
-          const nombre = document.getElementById('editNombre').value.trim();
-          const estado = document.getElementById('editEstado').value.trim();
-          await sb.from('proyectos').update({ nombre, estado }).eq('id', f.id);
-          await cargarVistaProyectos();
-        };
-      };
-      borrarBtn.onclick = async (ev) => {
-        ev.stopPropagation();
-        if (!confirm(`¿Borrar el proyecto "${f.nombre}"? Las propuestas generadas quedan sin proyecto vinculado, no se borran.`)) return;
-        await sb.from('proyectos').delete().eq('id', f.id);
-        await cargarVistaProyectos();
-      };
+  function renderKanban() {
+    const board = document.getElementById('kanban');
+    const hoy = hoyISO();
+    const visibles = proyectosCache.filter(p => !p.perdido && coincideBusqueda(p));
+    if (!proyectosCache.length) {
+      board.innerHTML = '<div class="placeholder" style="flex:1;">Todavía no hay proyectos. Creá el primero con "Nuevo proyecto".</div>';
+      return;
     }
+    board.innerHTML = ESTADOS_PROYECTO.map(([id, label], idx) => {
+      const enCol = visibles.filter(p => estadoEnTablero(p.estado) === id)
+        .sort((a, b) => (a.proxima_fecha || '9999').localeCompare(b.proxima_fecha || '9999'));
+      const suma = sumarPorMoneda(enCol);
+      return `<section class="kcol" aria-label="${label}">
+        <div class="kcol-head"><span>${label}</span><span class="kcol-count">${enCol.length}</span></div>
+        ${suma ? `<div class="kcol-suma">${suma}</div>` : ''}
+        <div class="kcol-cards">
+          ${enCol.map(p => {
+            const nR = (reunionesPorProyecto[p.id] || []).length, nP = (propuestasPorProyecto[p.id] || []).length;
+            const vencida = p.proxima_fecha && p.proxima_fecha <= hoy;
+            const estadoRaro = p.estado && !ESTADOS_PROYECTO.some(x => x[0] === p.estado);
+            return `<article class="kcard" data-id="${escapeHtml(String(p.id))}" tabindex="0">
+              <div class="kcard-cliente">${escapeHtml(nombreClienteProyecto(p))}</div>
+              ${p.nombre && clienteDeProyecto(p) ? `<div class="kcard-obj">${escapeHtml(p.nombre)}</div>` : ''}
+              ${estadoRaro ? `<div class="kcard-meta">Etapa anterior: ${escapeHtml(p.estado)}</div>` : ''}
+              ${p.proxima_accion || p.proxima_fecha ? `<div class="kcard-prox${vencida ? ' vencida' : ''}">${escapeHtml(p.proxima_accion || 'Próxima acción')}${p.proxima_fecha ? ' · ' + fechaCorta(p.proxima_fecha) : ''}</div>` : ''}
+              <div class="kcard-pie">
+                <span>${fmtMonto(p.valor_estimado, p.moneda)}</span>
+                <span>${nR ? nR + ' reunión' + (nR === 1 ? '' : 'es') : ''}${nR && nP ? ' · ' : ''}${nP ? nP + ' propuesta' + (nP === 1 ? '' : 's') : ''}</span>
+              </div>
+              <div class="kcard-mover">
+                <button class="mover" data-dir="-1" aria-label="Pasar a la etapa anterior"${idx === 0 ? ' disabled' : ''}>‹</button>
+                <button class="mover" data-dir="1" aria-label="Pasar a la etapa siguiente"${idx === ESTADOS_PROYECTO.length - 1 ? ' disabled' : ''}>›</button>
+              </div>
+            </article>`;
+          }).join('') || '<div class="kcol-vacia">Sin proyectos</div>'}
+        </div>
+      </section>`;
+    }).join('');
+
+    board.querySelectorAll('.kcard').forEach(card => {
+      card.onclick = () => abrirModalProyecto(card.dataset.id);
+      card.onkeydown = (ev) => { if (ev.key === 'Enter') abrirModalProyecto(card.dataset.id); };
+    });
+    board.querySelectorAll('.mover').forEach(btn => btn.onclick = async (ev) => {
+      ev.stopPropagation();
+      const p = proyectoPorId(btn.closest('.kcard').dataset.id);
+      const idx = ESTADOS_PROYECTO.findIndex(x => x[0] === estadoEnTablero(p.estado));
+      const nuevo = ESTADOS_PROYECTO[idx + Number(btn.dataset.dir)];
+      if (nuevo) await guardarProyecto(p, { estado: nuevo[0] });
+    });
+  }
+
+  function renderPerdidos() {
+    const perdidos = proyectosCache.filter(p => p.perdido);
+    document.getElementById('perdidosCount').textContent = perdidos.length;
+    document.getElementById('perdidosList').innerHTML = perdidos.length
+      ? perdidos.map(p => `<div class="archivo-item"><span><a href="#" class="abrir-perdido" data-id="${escapeHtml(String(p.id))}">${escapeHtml(tituloProyecto(p))}</a>${p.motivo_perdido ? ' — ' + escapeHtml(p.motivo_perdido) : ''}</span><span><a href="#" class="reactivar" data-id="${escapeHtml(String(p.id))}">Reactivar</a></span></div>`).join('')
+      : '<div class="empty-note">No hay proyectos perdidos.</div>';
+    document.querySelectorAll('.abrir-perdido').forEach(a => a.onclick = (ev) => { ev.preventDefault(); abrirModalProyecto(a.dataset.id); });
+    document.querySelectorAll('.reactivar').forEach(a => a.onclick = (ev) => { ev.preventDefault(); guardarProyecto(proyectoPorId(a.dataset.id), { perdido: false, motivo_perdido: null }); });
+  }
+
+  function renderSueltas() {
+    document.getElementById('sueltasCount').textContent = propuestasSueltas.length;
+    const cont = document.getElementById('sueltasList');
+    cont.innerHTML = propuestasSueltas.length
+      ? propuestasSueltas.map((row, i) => `<div class="historial-item" data-i="${i}"><span class="cliente">${escapeHtml(row.cliente_texto || '(sin cliente)')}${row.estado === 'aceptada' ? '<span class="tag-warm" style="color:var(--accent);border-color:var(--accent);">✓</span>' : ''}</span><span class="fecha">${fechaCorta(row.creado_at)}</span></div>`).join('')
+      : '<div class="empty-note">Todas las propuestas están asignadas a un proyecto.</div>';
+    cont.querySelectorAll('.historial-item').forEach(el => el.onclick = () => abrirPropuestaEnRelevar(propuestasSueltas[+el.dataset.i]));
+  }
+
+  function abrirPropuestaEnRelevar(row) {
+    const p = propuestaDesdeRow(row);
+    if (!p) return;
+    cerrarModalProyecto();
+    activarTab(tabRelevarBtn, viewRelevar);
+    mostrarPropuesta(p);
+    outputWrap.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function guardarProyecto(p, cambios) {
+    const { error } = await sb.from('proyectos').update({ ...cambios, actualizado_at: new Date().toISOString() }).eq('id', p.id);
+    if (error) { alert('No se pudo guardar: ' + error.message); return false; }
+    Object.assign(p, cambios, { actualizado_at: new Date().toISOString() });
+    refrescarSelectProyecto();
+    renderAvisosCartera(); renderKanban(); renderPerdidos();
+    renderMetricasCartera(Object.values(propuestasPorProyecto).flat().concat(propuestasSueltas));
+    if (proyectoAbiertoId === String(p.id)) renderModalProyecto(p);
+    return true;
+  }
+
+  // ---------- modal ----------
+  function mostrarModal() {
+    modalProyecto.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  function cerrarModalProyecto() {
+    modalProyecto.hidden = true;
+    document.body.style.overflow = '';
+    proyectoAbiertoId = null;
+  }
+  modalProyecto.addEventListener('click', (ev) => { if (ev.target === modalProyecto) cerrarModalProyecto(); });
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !modalProyecto.hidden) cerrarModalProyecto(); });
+
+  // Abre un proyecto desde cualquier pestaña (por ejemplo, desde la ficha del cliente).
+  async function abrirProyectoDesdeAfuera(id) {
+    activarTab(tabProyectosBtn, viewProyectos);
+    await cargarVistaProyectos();
+    abrirModalProyecto(id);
+  }
+
+  function abrirModalProyecto(id) {
+    const p = proyectoPorId(id);
+    if (!p) return;
+    proyectoAbiertoId = String(p.id);
+    renderModalProyecto(p);
+    mostrarModal();
+  }
+
+  function opcionesClientes(seleccionado) {
+    return `<option value="">(sin cliente)</option>` + clientesCache.map(c =>
+      `<option value="${escapeHtml(String(c.id))}"${String(c.id) === String(seleccionado) ? ' selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
+  }
+  function camposProyectoHTML(p) {
+    return `
+      <div class="form-row two">
+        <div><label for="mpCliente">Cliente</label><select id="mpCliente">${opcionesClientes(p.cliente_id)}</select></div>
+        <div><label for="mpObjetivo">Objetivo del proyecto</label><input type="text" id="mpObjetivo" value="${escapeHtml(p.nombre || '')}" placeholder="Ej. Automatizar la facturación"></div>
+      </div>
+      <div class="form-row two">
+        <div><label for="mpEstado">Etapa</label><select id="mpEstado">${ESTADOS_PROYECTO.map(([v, l]) => `<option value="${v}"${estadoEnTablero(p.estado) === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+        <div><label for="mpResponsable">Responsable</label><input type="text" id="mpResponsable" value="${escapeHtml(p.responsable || '')}"></div>
+      </div>
+      <div class="form-row two">
+        <div><label for="mpAccion">Próxima acción</label><input type="text" id="mpAccion" value="${escapeHtml(p.proxima_accion || '')}" placeholder="Ej. Llamar para agendar el relevamiento"></div>
+        <div><label for="mpFecha">Fecha</label><input type="date" id="mpFecha" value="${escapeHtml(p.proxima_fecha || '')}"></div>
+      </div>
+      <div class="form-row two">
+        <div><label for="mpValor">Valor estimado</label><input type="text" inputmode="numeric" id="mpValor" value="${p.valor_estimado != null ? escapeHtml(String(p.valor_estimado)) : ''}" placeholder="Ej. 900000"></div>
+        <div><label for="mpMoneda">Moneda</label><select id="mpMoneda"><option value="ARS"${p.moneda !== 'USD' ? ' selected' : ''}>Pesos (ARS)</option><option value="USD"${p.moneda === 'USD' ? ' selected' : ''}>Dólares (US$)</option></select></div>
+      </div>`;
+  }
+  function leerCamposProyecto(root) {
+    const v = (id) => root.querySelector(id).value.trim();
+    const valor = v('#mpValor').replace(/[^\d.,]/g, '').replace(/\./g, '').replace(',', '.');
+    return {
+      cliente_id: v('#mpCliente') || null,
+      nombre: v('#mpObjetivo') || null,
+      estado: v('#mpEstado'),
+      responsable: v('#mpResponsable') || null,
+      proxima_accion: v('#mpAccion') || null,
+      proxima_fecha: v('#mpFecha') || null,
+      valor_estimado: valor ? Number(valor) : null,
+      moneda: v('#mpMoneda'),
+    };
+  }
+
+  function renderModalProyecto(p) {
+    const c = clienteDeProyecto(p);
+    const propuestas = propuestasPorProyecto[p.id] || [];
+    modalProyectoBody.innerHTML = `
+      <div class="modal-head">
+        <div>
+          <h2 id="mpTitulo">${escapeHtml(nombreClienteProyecto(p))}</h2>
+          <p>${escapeHtml(p.nombre || 'Sin objetivo cargado')}${p.perdido ? ' · <strong>Perdido</strong>' : ''}</p>
+        </div>
+        <button class="modal-cerrar" id="mpCerrar" aria-label="Cerrar">×</button>
+      </div>
+      ${c ? `<p class="modal-sub"><a href="#" id="mpVerCliente">Ver ficha de ${escapeHtml(c.nombre)}</a>${contactoPrincipal(c) ? ' · ' + escapeHtml([contactoPrincipal(c).nombre, contactoPrincipal(c).email || contactoPrincipal(c).telefono].filter(Boolean).join(', ')) : ''}</p>` : ''}
+
+      <section class="modal-seccion">
+        <h3>Proyecto</h3>
+        ${camposProyectoHTML(p)}
+        <div class="propuesta-actions" style="margin:0;"><button class="primary" id="mpGuardar">Guardar cambios</button><span class="thinking" id="mpGuardado"></span></div>
+      </section>
+
+      <section class="modal-seccion">
+        <h3>Reuniones</h3>
+        <div class="form-row two" style="margin-bottom:0.5rem;">
+          <div><label for="mrFecha">Fecha</label><input type="date" id="mrFecha" value="${hoyISO()}"></div>
+          <div><label for="mrTipo">Tipo</label><select id="mrTipo">${TIPOS_REUNION.map(t => `<option>${t}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-row"><label for="mrResumen">Notas o transcripción (podés pegar lo de Gemini)</label><textarea id="mrResumen" rows="4"></textarea></div>
+        <button id="mrAgregar">Agregar reunión</button>
+        <div id="mrLista" style="margin-top:0.8rem;"><div class="empty-note">Cargando…</div></div>
+      </section>
+
+      <section class="modal-seccion">
+        <h3>Propuestas</h3>
+        ${propuestas.length ? propuestas.map((row, i) => {
+          const tema = (temas.find(t => t.id === row.tema_id) || {}).nombre;
+          return `<div class="historial-item" data-i="${i}"><span class="cliente">${escapeHtml(tema || 'Sin tema')}${row.estado === 'aceptada' ? '<span class="tag-warm" style="color:var(--accent);border-color:var(--accent);">✓ aceptada</span>' : ''}</span><span class="fecha">${fechaCorta(row.creado_at)}</span></div>`;
+        }).join('') + '<div class="propuesta-actions"><button id="mpPdf">Descargar PDF</button></div>'
+          : '<div class="empty-note">Todavía no hay propuestas. Cargá una reunión y usá "Armar propuesta con estas notas".</div>'}
+      </section>
+
+      <section class="modal-seccion">
+        <h3>Archivos adjuntos</h3>
+        <div class="archivos-list" id="archivosList">Cargando…</div>
+        <div class="pregunta-add" style="margin-top:0.7rem;"><input type="file" id="archivoInput"><button id="subirArchivoBtn">Subir</button></div>
+      </section>
+
+      <section class="modal-seccion modal-final">
+        ${p.perdido
+          ? `<button id="mpReactivar">Reactivar proyecto</button>`
+          : `<div class="pregunta-add"><input type="text" id="mpMotivo" placeholder="Motivo por el que se perdió (opcional)"><button id="mpPerdido">Marcar como perdido</button></div>`}
+        <button id="mpBorrar" class="texto-peligro">Borrar proyecto</button>
+      </section>`;
+
+    const $m = (sel) => modalProyectoBody.querySelector(sel);
+    $m('#mpCerrar').onclick = cerrarModalProyecto;
+    const verCliente = $m('#mpVerCliente');
+    if (verCliente) verCliente.onclick = async (ev) => {
+      ev.preventDefault(); cerrarModalProyecto();
+      activarTab(tabClientesBtn, viewClientes);
+      clienteAbiertoId = String(c.id);
+      await cargarVistaClientes();
+    };
+    $m('#mpGuardar').onclick = async () => {
+      if (await guardarProyecto(p, leerCamposProyecto(modalProyectoBody))) {
+        const ok = modalProyectoBody.querySelector('#mpGuardado'); if (ok) ok.textContent = 'Guardado.';
+      }
+    };
+
+    $m('#mrAgregar').onclick = async () => {
+      const resumen = $m('#mrResumen').value.trim();
+      if (!resumen) { $m('#mrResumen').focus(); return; }
+      const reunion = { proyecto_id: p.id, fecha: $m('#mrFecha').value || hoyISO(), tipo: $m('#mrTipo').value, resumen };
+      const { data, error } = await sb.from('proyecto_reuniones').insert(reunion).select().single();
+      if (error) { alert('No se pudo guardar la reunión (¿corriste supabase_migracion_cartera.sql?).'); return; }
+      (reunionesPorProyecto[p.id] = reunionesPorProyecto[p.id] || []).push(data);
+      $m('#mrResumen').value = '';
+      // La base puede haber avanzado la etapa sola (relevamiento hecho).
+      const { data: fresco } = await sb.from('proyectos').select('*').eq('id', p.id).single();
+      if (fresco) Object.assign(p, fresco);
+      renderKanban(); renderAvisosCartera();
+      renderModalProyecto(p);
+    };
+    cargarReunionesModal(p);
+
+    modalProyectoBody.querySelectorAll('.modal-seccion .historial-item').forEach(el => el.onclick = () => abrirPropuestaEnRelevar(propuestas[+el.dataset.i]));
+    const pdf = $m('#mpPdf');
+    if (pdf) pdf.onclick = () => descargarPdfProyecto({ nombre: tituloProyecto(p), esProyectoReal: true, estado: etiquetaEstadoProyecto(p.estado), propuestas });
+
+    const f = { id: p.id };
+    cargarArchivosProyecto(f, $m('#archivosList'));
+    $m('#subirArchivoBtn').onclick = () => subirArchivoProyecto(f, modalProyectoBody);
+
+    const perdido = $m('#mpPerdido');
+    if (perdido) perdido.onclick = () => guardarProyecto(p, { perdido: true, motivo_perdido: $m('#mpMotivo').value.trim() || null });
+    const reactivar = $m('#mpReactivar');
+    if (reactivar) reactivar.onclick = () => guardarProyecto(p, { perdido: false, motivo_perdido: null });
+    $m('#mpBorrar').onclick = async () => {
+      if (!confirm(`¿Borrar el proyecto "${tituloProyecto(p)}"? Se borran sus reuniones. Las propuestas quedan, sin proyecto asignado.`)) return;
+      const { error } = await sb.from('proyectos').delete().eq('id', p.id);
+      if (error) { alert('No se pudo borrar: ' + error.message); return; }
+      cerrarModalProyecto();
+      await cargarVistaProyectos();
+      refrescarSelectProyecto();
+    };
+  }
+
+  async function cargarReunionesModal(p) {
+    const cont = modalProyectoBody.querySelector('#mrLista');
+    const { data, error } = await sb.from('proyecto_reuniones').select('*').eq('proyecto_id', p.id)
+      .order('fecha', { ascending: false }).order('creado_at', { ascending: false });
+    if (!cont.isConnected) return;
+    if (error) { cont.innerHTML = '<div class="empty-note">No se pudieron cargar las reuniones.</div>'; return; }
+    if (!data.length) { cont.innerHTML = '<div class="empty-note">Todavía no hay reuniones cargadas.</div>'; return; }
+    cont.innerHTML = data.map(r => `
+      <div class="reunion-item" data-id="${r.id}">
+        <div class="reunion-head"><strong>${fechaCorta(r.fecha)}</strong> <span class="tag-warm" style="margin-left:0.3rem;">${escapeHtml(r.tipo || '')}</span></div>
+        <details${r.resumen.length < 400 ? ' open' : ''}><summary>Notas</summary><div class="reunion-texto">${escapeHtml(r.resumen)}</div></details>
+        <div class="contacto-links"><a href="#" class="r-propuesta">Armar propuesta con estas notas</a><a href="#" class="r-borrar">Borrar</a></div>
+      </div>`).join('');
+    cont.querySelectorAll('.r-propuesta').forEach(a => a.onclick = (ev) => {
+      ev.preventDefault();
+      const r = data.find(x => x.id === a.closest('.reunion-item').dataset.id);
+      prepararPropuestaDesdeReunion(p, r);
+    });
+    cont.querySelectorAll('.r-borrar').forEach(a => a.onclick = async (ev) => {
+      ev.preventDefault();
+      if (!confirm('¿Borrar esta reunión?')) return;
+      const id = a.closest('.reunion-item').dataset.id;
+      await sb.from('proyecto_reuniones').delete().eq('id', id);
+      reunionesPorProyecto[p.id] = (reunionesPorProyecto[p.id] || []).filter(x => x.id !== id);
+      renderKanban();
+      cargarReunionesModal(p);
+    });
+  }
+
+  function prepararPropuestaDesdeReunion(p, r) {
+    const c = clienteDeProyecto(p);
+    clienteInput.value = c ? c.nombre : (p.nombre || '');
+    document.getElementById('empresaInput').value = (c && c.razon_social) || '';
+    notasInput.value = r.resumen;
+    vinculoPendiente = { proyecto_id: String(p.id), reunion_id: r.id };
+    refrescarSelectProyecto();
+    cerrarModalProyecto();
+    activarTab(tabRelevarBtn, viewRelevar);
+    outputWrap.innerHTML = '<div class="placeholder">Notas cargadas desde la reunión. Elegí el tema y generá la propuesta.</div>';
+    temaSelect.focus();
+    temaSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // ---------- nuevo proyecto ----------
+  function abrirNuevoProyecto(clienteId) {
+    proyectoAbiertoId = null;
+    const base = { cliente_id: clienteId || '', estado: 'contacto_inicial', moneda: 'ARS' };
+    modalProyectoBody.innerHTML = `
+      <div class="modal-head"><div><h2>Nuevo proyecto</h2><p>Si el cliente no está en la lista, crealo primero en la pestaña Clientes o escribilo abajo.</p></div>
+        <button class="modal-cerrar" id="mpCerrar" aria-label="Cerrar">×</button></div>
+      <section class="modal-seccion">
+        ${camposProyectoHTML(base)}
+        <div class="form-row"><label for="mpClienteNuevo">O cliente nuevo (se da de alta como prospecto)</label><input type="text" id="mpClienteNuevo" placeholder="Nombre del cliente nuevo"></div>
+        <div class="propuesta-actions" style="margin:0;"><button class="primary" id="mpCrear">Crear proyecto</button><button id="mpCancelar">Cancelar</button></div>
+      </section>`;
+    const $m = (sel) => modalProyectoBody.querySelector(sel);
+    $m('#mpCerrar').onclick = cerrarModalProyecto;
+    $m('#mpCancelar').onclick = cerrarModalProyecto;
+    $m('#mpCrear').onclick = async () => {
+      const datos = leerCamposProyecto(modalProyectoBody);
+      const nuevoNombre = $m('#mpClienteNuevo').value.trim();
+      if (!datos.cliente_id && nuevoNombre) {
+        const c = await asegurarCliente(nuevoNombre, null);
+        if (!c) { alert('No se pudo crear el cliente.'); return; }
+        datos.cliente_id = c.id;
+      }
+      if (!datos.cliente_id && !datos.nombre) { $m('#mpCliente').focus(); return; }
+      const btn = $m('#mpCrear'); btn.disabled = true;
+      const { data, error } = await sb.from('proyectos').insert({ ...datos, perdido: false }).select().single();
+      btn.disabled = false;
+      if (error) { alert('No se pudo crear el proyecto: ' + error.message + '\n\n¿Corriste supabase_migracion_cartera.sql?'); return; }
+      proyectosCache.push(data);
+      refrescarSelectProyecto();
+      renderKanban(); renderMetricasCartera(Object.values(propuestasPorProyecto).flat().concat(propuestasSueltas));
+      abrirModalProyecto(data.id);
+    };
+    mostrarModal();
+    $m(clienteId ? '#mpObjetivo' : '#mpCliente').focus();
   }
 
   // ========== VISTA CONOCIMIENTO ==========

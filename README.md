@@ -1,9 +1,8 @@
 # Cuaderno de relevamiento — despliegue en Netlify + Supabase
 
-App standalone (ya no depende de claude.ai): banco de preguntas por tema +
-generador de propuesta de 7 secciones a partir de las notas de la reunión
-(las que te arme Gemini, pegadas a mano). Login propio, datos en el mismo
-Supabase de Cartera Viva.
+App standalone: banco de preguntas por tema, generador de propuesta de 7
+secciones a partir de las notas de la reunión, clientes y cartera de
+proyectos (lo que antes era Cartera Viva). Login propio, todo en Supabase.
 
 ## 1. Correr la migración SQL
 
@@ -213,6 +212,78 @@ No hacen falta variables de entorno nuevas.
 Nota: las copias viejas de `index.html`, `ver.html` y las funciones que
 estaban sueltas en la raíz del proyecto se borraron. Netlify solo usa las
 de `public/` y `netlify/functions/`.
+
+## 13. Gestión de clientes
+
+Corré `supabase_migracion_clientes.sql`. Reemplazá `public/index.html` y
+redeployá. No hacen falta variables de entorno nuevas.
+
+Usa la tabla `clientes` que ya existía en Supabase (si no existía, la
+crea) y solo le agrega columnas nuevas. Los clientes que ya tenías
+arrancan en etapa "Cliente".
+
+Pestaña nueva **Clientes**:
+- **Alta y edición**: nombre, razón social, CUIT, rubro, localidad,
+  dirección, web, cómo llegó y notas internas.
+- **Contactos**: varios por cliente (dueño, administración…), uno marcado
+  como principal. Desde la ficha: escribir mail (Gmail), llamar o abrir
+  WhatsApp. Para WhatsApp cargá el teléfono con código de área, sin 0 ni
+  15 (ej. 2804 123456).
+- **Etapa comercial**: Prospecto → Con propuesta → Cliente → Inactivo. Se
+  filtra arriba de la lista. Avanza sola: al generarle una propuesta a un
+  prospecto pasa a "Con propuesta", y cuando acepta, a "Cliente".
+- **Próximo contacto**: fecha y para qué. Los que vencen hoy o están
+  atrasados aparecen en un aviso arriba de la lista.
+- **Bitácora**: llamadas, reuniones, mails, WhatsApp o notas, con fecha.
+- **Propuestas del cliente**: todas las que le generaste; al tocar una se
+  abre en Relevar. "Nueva propuesta" te lleva al generador con el cliente
+  y la razón social ya cargados.
+
+En **Relevar**, al escribir el nombre de un cliente conocido se completa
+la razón social. Si escribís un cliente que no existe, al generar la
+propuesta se da de alta solo como prospecto. Los mails (link de la
+propuesta y preguntas pendientes) salen con el mail del contacto
+principal ya puesto.
+
+Las propuestas que ya tenías se vinculan solas a su cliente por el nombre.
+
+Para borrar un cliente que tiene proyectos, pasalo a "Inactivo":
+Supabase no deja borrarlo mientras tenga proyectos.
+
+## 14. Cartera Viva, adentro del Cuaderno
+
+Corré `supabase_migracion_cartera.sql` (después de la de clientes).
+Reemplazá `public/index.html` y redeployá. Con esto la Cartera Viva vieja
+(la del link de claude.ai) ya no hace falta: sus datos eran de ejemplo y
+no se migran.
+
+La pestaña **Proyectos** ahora es el tablero de Cartera Viva:
+- **Tablero por etapa**: Contacto inicial → Relevamiento agendado →
+  Relevamiento hecho → Propuesta enviada → En desarrollo → Ganado. Cada
+  tarjeta muestra cliente, objetivo, próxima acción (en naranja si está
+  vencida), valor estimado y cuántas reuniones y propuestas tiene. Las
+  flechas la pasan de etapa. Los proyectos que tenías en Supabase con
+  otra etapa aparecen en "Contacto inicial" con su etapa anterior anotada.
+- **Arriba**: proyectos activos, valor en juego (pesos y dólares por
+  separado), ganados y propuestas del mes; y avisos de acciones para hoy
+  y de proyectos sin movimiento hace más de 15 días.
+- **Ventana del proyecto** (tocando la tarjeta): datos del proyecto,
+  reuniones, propuestas, PDF, archivos adjuntos, marcar como perdido o
+  borrar.
+- **Reuniones**: pegás las notas de Gemini en la reunión y con "Armar
+  propuesta con estas notas" pasan al generador con el cliente y el
+  proyecto ya elegidos. Solo falta elegir el tema.
+- **Perdidos** y **Propuestas sin proyecto** quedan abajo, plegados.
+
+La etapa avanza sola (nunca retrocede): una reunión de tipo Relevamiento
+lo pasa a "Relevamiento hecho"; compartir el link de una propuesta, a
+"Propuesta enviada"; y que el cliente la acepte, a "En desarrollo".
+"Ganado" lo marcás vos.
+
+En **Relevar** hay un selector nuevo de Proyecto al lado de la empresa:
+muestra los proyectos del cliente que escribiste y, si tiene uno solo
+activo, lo elige solo. En la ficha de cada **Cliente** aparecen sus
+proyectos y un acceso para crearle uno nuevo.
 
 ## Notas de seguridad
 
