@@ -183,6 +183,37 @@ Corré `supabase_migracion_pagos.sql`. Reemplazá `public/index.html` y redeploy
   avance por proyecto (cobrado vs. total) y la lista de cobros pendientes
   sin resolver.
 
+## 12. La herramienta aprende sola (septiembre 2026)
+
+Corré `supabase_migracion_aprendizaje.sql` (y `supabase_migracion_pagos.sql`
+si nunca lo corriste: antes faltaba en el proyecto). Reemplazá
+`public/index.html` y `netlify/functions/generar-propuesta.js` y redeployá.
+No hacen falta variables de entorno nuevas.
+
+- **Después de la reunión**: al generar una propuesta, aparece un panel
+  nuevo abajo con dos cosas:
+  - *Quedaron sin responder*: lo que falta saber para cerrar la
+    propuesta, redactado para mandárselo al cliente. "Armar mail de
+    seguimiento" te abre el borrador en tu correo con las preguntas ya
+    puestas.
+  - *Preguntas nuevas para el banco*: hasta 3 preguntas que esta reunión
+    mostró que te faltaban, cada una con su subproceso. "Agregar al banco"
+    la suma directo; "Descartar" la saca de la lista.
+  Este panel es solo tuyo: el link que ve el cliente no lo muestra. En
+  propuestas viejas aparece el botón "Analizar reunión" para correrlo.
+- **Casos aceptados → Conocimiento**: cuando una propuesta pasa a
+  aceptada, se guarda sola en la pestaña Conocimiento un resumen del caso
+  (dolor, solución, inversión, semanas y criterios de éxito). Las próximas
+  propuestas de ese tema lo usan para calibrar plazos y montos. Si un
+  resumen no te sirve, lo borrás desde Conocimiento como cualquier otro.
+- **Reuniones largas**: el límite de texto subió de 20.000 a ~150.000
+  caracteres, y los errores ahora dicen qué pasó (notas muy largas, sesión
+  vencida, tiempo agotado) en vez de un mensaje genérico.
+
+Nota: las copias viejas de `index.html`, `ver.html` y las funciones que
+estaban sueltas en la raíz del proyecto se borraron. Netlify solo usa las
+de `public/` y `netlify/functions/`.
+
 ## Notas de seguridad
 
 - La clave de Anthropic vive **solo** como variable de entorno de la

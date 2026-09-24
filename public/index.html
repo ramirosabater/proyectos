@@ -645,15 +645,8 @@ El gantt tiene que tener entre 3 y 10 etapas (más etapas si hay varias personas
       const conocimiento = await conocimientoParaTema(temaId);
       const prompt = promptPropuesta(cliente, tema ? tema.nombre : '', tema ? todasLasPreguntasDelTema(tema) : [], notas, conocimiento);
 
-      const resp = await fetch('/.netlify/functions/generar-propuesta', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + token },
-        body: JSON.stringify({ prompt }),
-      });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'error');
-
-      const parsed = parsearJsonTolerante(data.text);
+      const texto = await llamarIA(prompt, 3000, token);
+      const parsed = parsearJsonTolerante(texto);
       if (!parsed) throw new Error('invalid_json');
 
       const { data: inserted, error: insErr } = await sb.from('propuestas').insert({
@@ -667,14 +660,213 @@ El gantt tiene que tener entre 3 y 10 etapas (más etapas si hay varias personas
       }).select().single();
       if (insErr) throw insErr;
 
-      propuestaActual = { id: inserted.id, estado: inserted.estado, empresa_texto: inserted.empresa_texto, ...parsed };
+      propuestaActual = {
+        id: inserted.id, estado: inserted.estado, empresa_texto: inserted.empresa_texto,
+        cliente_texto: inserted.cliente_texto, tema_id: inserted.tema_id, notas: inserted.notas, analisis: null,
+        ...parsed,
+      };
       mostrarPropuesta(propuestaActual);
       await cargarHistorial();
+      generarBtn.disabled = false; thinkingMsg.hidden = true;
+      analizarReunion(propuestaActual); // corre aparte: si falla, la propuesta ya quedó guardada
     } catch (e) {
-      outputWrap.innerHTML = `<div class="placeholder">No se pudo generar la propuesta. Probá de nuevo en un momento.</div>`;
+      outputWrap.innerHTML = `<div class="placeholder">${escapeHtml(mensajeErrorIA(e.message))}</div>`;
     } finally {
       generarBtn.disabled = false; thinkingMsg.hidden = true;
     }
+  }
+
+  // ========== LLAMADA A LA IA (compartida) ==========
+  async function llamarIA(prompt, maxTokens, token) {
+    if (!token) {
+      const { data: sessionData } = await sb.auth.getSession();
+      token = sessionData.session && sessionData.session.access_token;
+    }
+    if (prompt.length > 150000) throw new Error('notas_muy_largas');
+    let resp;
+    try {
+      resp = await fetch('/.netlify/functions/generar-propuesta', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + token },
+        body: JSON.stringify({ prompt, max_tokens: maxTokens }),
+      });
+    } catch { throw new Error('sin_conexion'); }
+    let data = null;
+    try { data = await resp.json(); } catch {}
+    // Si Netlify corta la función por tiempo, devuelve texto plano (no JSON).
+    if (!data) throw new Error(resp.status === 502 || resp.status === 504 ? 'tiempo_agotado' : 'error');
+    if (!resp.ok) throw new Error(data.error || 'error');
+    return data.text;
+  }
+
+  function mensajeErrorIA(codigo) {
+    const mensajes = {
+      notas_muy_largas: 'Las notas son demasiado largas (más de ~150.000 caracteres). Sacá las partes de charla que no aportan y probá de nuevo.',
+      respuesta_cortada: 'La respuesta salió más larga de lo previsto y se cortó. Probá de nuevo; si se repite, recortá un poco las notas.',
+      tiempo_agotado: 'La IA tardó más de lo que Netlify permite esperar. Probá de nuevo en un momento.',
+      unauthorized: 'Tu sesión venció. Recargá la página y volvé a entrar.',
+      sin_conexion: 'No hay conexión con el servidor. Revisá internet y probá de nuevo.',
+      server_misconfigured: 'Faltan variables de entorno en Netlify (ANTHROPIC_API_KEY, SUPABASE_URL o SUPABASE_ANON_KEY).',
+      invalid_json: 'La IA respondió en un formato inesperado. Probá de nuevo.',
+    };
+    return mensajes[codigo] || 'No se pudo completar. Probá de nuevo en un momento.';
+  }
+
+  // ========== ANÁLISIS DE LA REUNIÓN (pendientes + banco que crece solo) ==========
+  function promptAnalisis(cliente, tema, notas) {
+    const subs = (tema && tema.subprocesos) || [];
+    const banco = subs.length
+      ? subs.map(s => `[${s.id}] ${s.nombre}\n${(s.preguntas || []).map(q => '  - ' + q.texto).join('\n') || '  (sin preguntas)'}`).join('\n')
+      : '(no hay tema elegido: no sugieras preguntas nuevas, devolvé "sugeridas": [])';
+    return `Sos consultor senior de diagnóstico de IA para pymes. Analizá las notas de una reunión de relevamiento contra el banco de preguntas que usa el consultor. Español rioplatense.
+
+Cliente: ${cliente || '(no indicado)'}
+Tema: ${tema ? tema.nombre : '(no indicado)'}
+
+Banco de preguntas del tema, agrupado por subproceso (entre corchetes, el id de cada subproceso):
+${banco}
+
+Notas de la reunión:
+${notas}
+
+Devolvé dos cosas:
+
+1. "pendientes": información que falta para cerrar bien la propuesta y que las notas no responden (ni directa ni indirectamente). Tomalas del banco cuando apliquen a este caso, y sumá alguna propia solo si es clave. Redactalas como preguntas claras y cordiales, listas para mandarle al cliente por mail, en trato de usted. Máximo 8, ordenadas de más a menos importante. Si la reunión cubrió todo, lista vacía.
+
+2. "sugeridas": hasta 3 preguntas NUEVAS que conviene sumar al banco porque esta reunión mostró que faltaban. Tienen que servir para otros clientes (nada específico de este), no repetir ni parafrasear preguntas que ya estén en el banco, y cada una va en el subproceso que mejor le corresponda. Si no hay ninguna que valga la pena, lista vacía.
+
+Respondé ÚNICAMENTE con un objeto JSON (sin texto antes ni después, sin fences de markdown) con esta forma exacta:
+
+{
+  "pendientes": ["string"],
+  "sugeridas": [{"texto": "string", "subproceso_id": "string — uno de los ids entre corchetes"}]
+}`;
+  }
+
+  async function analizarReunion(p) {
+    if (!p || !p.id || !p.notas) return;
+    p.analizando = true;
+    if (propuestaActual && propuestaActual.id === p.id) renderAnalisis(p);
+    try {
+      const tema = temas.find(t => t.id === p.tema_id);
+      const texto = await llamarIA(promptAnalisis(p.cliente_texto, tema, p.notas), 1500);
+      const r = parsearJsonTolerante(texto);
+      if (!r) throw new Error('invalid_json');
+      const idsValidos = new Set(((tema && tema.subprocesos) || []).map(s => s.id));
+      const analisis = {
+        generado_at: new Date().toISOString(),
+        pendientes: (r.pendientes || []).filter(x => typeof x === 'string' && x.trim()).slice(0, 8),
+        sugeridas: (r.sugeridas || [])
+          .filter(x => x && typeof x.texto === 'string' && x.texto.trim() && idsValidos.has(x.subproceso_id))
+          .slice(0, 3)
+          .map(x => ({ texto: x.texto.trim(), subproceso_id: x.subproceso_id, estado: 'nueva' })),
+      };
+      const { error } = await sb.from('propuestas').update({ analisis }).eq('id', p.id);
+      if (error) throw new Error('guardar_analisis');
+      p.analisis = analisis;
+      p.errorAnalisis = null;
+    } catch (e) {
+      p.errorAnalisis = e.message === 'guardar_analisis'
+        ? 'No se pudo guardar el análisis (¿falta correr supabase_migracion_aprendizaje.sql?).'
+        : mensajeErrorIA(e.message);
+    } finally {
+      p.analizando = false;
+      if (propuestaActual && propuestaActual.id === p.id) renderAnalisis(p);
+    }
+  }
+
+  async function guardarEstadoSugeridas(p) {
+    await sb.from('propuestas').update({ analisis: p.analisis }).eq('id', p.id);
+  }
+
+  function nombreSubproceso(subprocesoId) {
+    for (const t of temas) {
+      const s = (t.subprocesos || []).find(x => x.id === subprocesoId);
+      if (s) return s.nombre;
+    }
+    return '';
+  }
+
+  function renderAnalisis(p) {
+    const wrap = document.getElementById('analisisWrap');
+    if (!wrap) return;
+    if (!p.id || (!p.notas && !p.analisis)) { wrap.innerHTML = ''; return; }
+
+    if (p.analizando) {
+      wrap.innerHTML = `<div class="preguntas-panel" style="margin-top:1rem;"><div class="titulo-tema">Después de la reunión</div><div class="empty-note">Buscando qué quedó sin responder y qué preguntas sumar al banco…</div></div>`;
+      return;
+    }
+    if (!p.analisis) {
+      wrap.innerHTML = `<div class="preguntas-panel" style="margin-top:1rem;">
+        <div class="titulo-tema">Después de la reunión</div>
+        ${p.errorAnalisis ? `<div class="empty-note">${escapeHtml(p.errorAnalisis)}</div>` : '<div class="empty-note">Revisá qué quedó sin responder en esta reunión y qué preguntas conviene sumar al banco.</div>'}
+        <button id="analizarBtn">Analizar reunión</button>
+      </div>`;
+      document.getElementById('analizarBtn').onclick = () => analizarReunion(p);
+      return;
+    }
+
+    const a = p.analisis;
+    const pend = a.pendientes || [];
+    const sugs = (a.sugeridas || []).map((s, i) => ({ ...s, i })).filter(s => s.estado !== 'descartada');
+    wrap.innerHTML = `<div class="preguntas-panel" style="margin-top:1rem;">
+      <div class="titulo-tema">Después de la reunión</div>
+      <h3 style="margin-top:0;">Quedaron sin responder</h3>
+      ${pend.length
+        ? `<ol style="margin:0 0 0.8rem;padding-left:1.3rem;">${pend.map(q => `<li style="margin-bottom:0.3rem;">${escapeHtml(q)}</li>`).join('')}</ol>
+           <div class="propuesta-actions" style="margin-top:0;">
+             <button id="mailPendientesBtn">Armar mail de seguimiento</button>
+             <button id="copiarPendientesBtn">Copiar preguntas</button>
+           </div>`
+        : '<div class="empty-note">La reunión cubrió lo que hacía falta para este tema.</div>'}
+      <h3>Preguntas nuevas para el banco</h3>
+      ${sugs.length
+        ? sugs.map(s => `<div class="archivo-item" data-i="${s.i}">
+            <span>${escapeHtml(s.texto)} <span class="tag-warm">${escapeHtml(nombreSubproceso(s.subproceso_id) || 'subproceso borrado')}</span></span>
+            <span>${s.estado === 'agregada'
+              ? '<span class="tag-warm" style="color:var(--accent);border-color:var(--accent);">✓ en el banco</span>'
+              : `<a href="#" class="sug-agregar">Agregar al banco</a> · <a href="#" class="sug-descartar">Descartar</a>`}</span>
+          </div>`).join('')
+        : '<div class="empty-note">No hay preguntas nuevas para sumar esta vez.</div>'}
+      <p class="hint" style="margin:0.8rem 0 0;font-size:0.82rem;color:var(--ink-soft);">Analizado el ${new Date(a.generado_at).toLocaleDateString('es-AR')} · <a href="#" id="reanalizarBtn">Volver a analizar</a></p>
+    </div>`;
+
+    const textoPendientes = pend.map((q, i) => `${i + 1}. ${q}`).join('\n');
+    const mailBtn = document.getElementById('mailPendientesBtn');
+    if (mailBtn) mailBtn.onclick = () => {
+      const firma = (configuracionCache && configuracionCache.nombre_negocio) || '';
+      const asunto = `Algunas preguntas para completar la propuesta${p.cliente_texto ? ' — ' + p.cliente_texto : ''}`;
+      const cuerpo = `Hola, ¿cómo está?\n\nGracias por el tiempo en la reunión. Para terminar de ajustar la propuesta me quedaron algunas preguntas:\n\n${textoPendientes}\n\nCon esto puedo cerrar los números y los plazos. Quedo atento.\n\nSaludos${firma ? ',\n' + firma : ''}`;
+      location.href = `mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+    };
+    const copiarBtn = document.getElementById('copiarPendientesBtn');
+    if (copiarBtn) copiarBtn.onclick = () => navigator.clipboard.writeText(textoPendientes).catch(() => {});
+
+    wrap.querySelectorAll('.sug-agregar').forEach(link => {
+      link.onclick = async (ev) => {
+        ev.preventDefault();
+        const s = a.sugeridas[Number(link.closest('.archivo-item').dataset.i)];
+        if (!nombreSubproceso(s.subproceso_id)) { alert('Ese subproceso ya no existe. Cargala a mano desde el Banco de preguntas.'); return; }
+        link.textContent = 'Agregando…';
+        await agregarPregunta(s.subproceso_id, s.texto);
+        s.estado = 'agregada';
+        await guardarEstadoSugeridas(p);
+        renderAnalisis(p);
+      };
+    });
+    wrap.querySelectorAll('.sug-descartar').forEach(link => {
+      link.onclick = async (ev) => {
+        ev.preventDefault();
+        a.sugeridas[Number(link.closest('.archivo-item').dataset.i)].estado = 'descartada';
+        await guardarEstadoSugeridas(p);
+        renderAnalisis(p);
+      };
+    });
+    document.getElementById('reanalizarBtn').onclick = (ev) => {
+      ev.preventDefault();
+      if (!p.notas) { alert('Esta propuesta no tiene las notas guardadas.'); return; }
+      analizarReunion(p);
+    };
   }
 
   function parsearJsonTolerante(text) {
@@ -716,6 +908,7 @@ El gantt tiene que tener entre 3 y 10 etapas (más etapas si hay varias personas
           <button id="compartirBtn">Compartir con el cliente</button>
         </div>
         <div id="compartirPanel"></div>
+        <div id="analisisWrap"></div>
         <div class="preguntas-panel" style="margin-top:1rem;">
           <div class="titulo-tema">Cobros</div>
           <div id="cobrosList"></div>
@@ -727,6 +920,7 @@ El gantt tiene que tener entre 3 y 10 etapas (más etapas si hay varias personas
         </div>`;
       renderGantt(p.gantt || [], document.getElementById('ganttWrap'), p.id);
       if (p.id) cargarCobrosPropuesta(p.id);
+      renderAnalisis(p);
       document.getElementById('agregarPagoBtn').onclick = async () => {
         if (!p.id) { alert('Guardá la propuesta primero.'); return; }
         const descripcion = document.getElementById('pagoDescInput').value.trim();
@@ -847,7 +1041,7 @@ El gantt tiene que tener entre 3 y 10 etapas (más etapas si hay varias personas
         proximo_paso: document.getElementById('edProximoPaso').value.trim(),
       };
       if (p.id) {
-        const { id, gantt, estado, empresa_texto, ...contenido } = actualizado;
+        const { id, gantt, estado, empresa_texto, cliente_texto, tema_id, notas, analisis, analizando, errorAnalisis, ...contenido } = actualizado;
         await sb.from('propuestas').update({ contenido: JSON.stringify(contenido), empresa_texto }).eq('id', p.id);
       }
       propuestaActual = actualizado;
@@ -1002,7 +1196,7 @@ El gantt tiene que tener entre 3 y 10 etapas (más etapas si hay varias personas
       item.onclick = () => {
         const contenido = typeof row.contenido === 'string' ? parsearJsonTolerante(row.contenido) : row.contenido;
         if (!contenido) return;
-        mostrarPropuesta({ id: row.id, estado: row.estado, empresa_texto: row.empresa_texto, ...contenido, gantt: row.gantt || contenido.gantt || [] });
+        mostrarPropuesta({ ...contenido, id: row.id, estado: row.estado, empresa_texto: row.empresa_texto, cliente_texto: row.cliente_texto, tema_id: row.tema_id, notas: row.notas, analisis: row.analisis || null, gantt: row.gantt || contenido.gantt || [] });
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
       historialList.appendChild(item);

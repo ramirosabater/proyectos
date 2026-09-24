@@ -49,9 +49,17 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'bad_request' }) };
   }
   const prompt = body.prompt;
-  if (!prompt || typeof prompt !== 'string' || prompt.length > 20000) {
+  if (!prompt || typeof prompt !== 'string') {
     return { statusCode: 400, body: JSON.stringify({ error: 'bad_request' }) };
   }
+  // ~150.000 caracteres alcanzan para la transcripción de una reunión larga
+  // de Gemini más el banco de preguntas y el conocimiento acumulado.
+  if (prompt.length > 150000) {
+    return { statusCode: 413, body: JSON.stringify({ error: 'notas_muy_largas' }) };
+  }
+  // Cada llamada puede pedir su propio tope de respuesta (el análisis de la
+  // reunión necesita menos que la propuesta), pero nunca más de 4000.
+  const maxTokens = Math.min(Math.max(parseInt(body.max_tokens, 10) || 3000, 256), 4000);
 
   let resp;
   try {
@@ -64,7 +72,7 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
+        max_tokens: maxTokens,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
@@ -78,6 +86,9 @@ exports.handler = async (event) => {
   }
 
   const data = await resp.json();
+  if (data.stop_reason === 'max_tokens') {
+    return { statusCode: 502, body: JSON.stringify({ error: 'respuesta_cortada' }) };
+  }
   const text = (data.content || [])
     .filter((b) => b.type === 'text')
     .map((b) => b.text)
